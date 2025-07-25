@@ -62,11 +62,15 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
 
     const watchProviders = recommendation.watchProviders?.filter(p => p.logo_path) || [];
 
+    const posterUrl = recommendation.posterPath
+        ? `${IMAGE_BASE_URL}w500${recommendation.posterPath}`
+        : `https://picsum.photos/seed/${encodeURIComponent(recommendation.title)}/500/750`;
+
     return (
         <div className="w-full max-w-4xl mx-auto animate-fade-in flex flex-col lg:flex-row gap-8 items-center lg:items-start">
             <div className="flex-shrink-0 w-60 md:w-72">
                 <img
-                    src={`https://picsum.photos/seed/${encodeURIComponent(recommendation.title)}/500/750`}
+                    src={posterUrl}
                     alt={`Poster for ${recommendation.title}`}
                     className="w-full h-auto rounded-lg shadow-2xl shadow-accent/10 object-cover"
                 />
@@ -92,6 +96,7 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
 
                 {/* Justification */}
                 <div className="bg-surface/50 p-4 rounded-lg mb-6">
+                    <h3 className="text-lg font-bold mb-2 text-text-primary">{t('recommendationScreen.justificationHeader')}</h3>
                     <p className="text-md text-text-primary/90 leading-relaxed">
                         <HighlightedText
                             text={recommendation.justification}
@@ -118,10 +123,13 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                     </div>
                 </div>
 
-                {/* External Links */}
-                <div className="flex items-center justify-center lg:justify-start gap-4 mb-8">
-                    {imdbUrl && <a href={imdbUrl} target="_blank" rel="noopener noreferrer" aria-label="View on IMDb"><ImdbIcon className="h-6 w-auto hover:opacity-80 transition-opacity" /></a>}
-                    <a href={rtUrl} target="_blank" rel="noopener noreferrer" aria-label="Search on Rotten Tomatoes"><RottenTomatoesIcon className="h-6 w-auto hover:opacity-80 transition-opacity" /></a>
+                {/* More Details Links */}
+                <div className="mb-8">
+                    <h3 className="text-lg font-bold mb-3 text-text-primary">{t('recommendationScreen.moreDetails')}</h3>
+                    <div className="flex items-center justify-center lg:justify-start gap-4">
+                        {imdbUrl && <a href={imdbUrl} target="_blank" rel="noopener noreferrer" aria-label="View on IMDb"><ImdbIcon className="h-8 w-auto hover:opacity-80 transition-opacity" /></a>}
+                        <a href={rtUrl} target="_blank" rel="noopener noreferrer" aria-label="Search on Rotten Tomatoes"><RottenTomatoesIcon className="h-8 w-auto hover:opacity-80 transition-opacity" /></a>
+                    </div>
                 </div>
 
                 {/* Action Buttons */}

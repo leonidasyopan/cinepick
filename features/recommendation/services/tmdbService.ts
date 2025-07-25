@@ -15,6 +15,15 @@ const READ_ACCESS_TOKEN = import.meta.env.VITE_TMDB_READ_ACCESS_TOKEN;
 const BASE_URL = 'https://api.themoviedb.org/3';
 export const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
 
+// Helper function to format locale for TMDB API
+const formatLocaleForTMDb = (locale: string): string => {
+  const parts = locale.split('-');
+  if (parts.length === 2) {
+    return `${parts[0]}-${parts[1].toUpperCase()}`;
+  }
+  return 'en-US'; // fallback
+};
+
 interface TmdbMovieSearchResult {
   id: number;
   title: string;
@@ -46,9 +55,12 @@ interface TmdbWatchProviderResult {
   }
 }
 
-const searchMovie = async (title: string, year: number): Promise<number | null> => {
+const searchMovie = async (title: string, year: number, locale: string): Promise<number | null> => {
   const url = new URL(`${BASE_URL}/search/movie`);
+  const tmdbLocale = formatLocaleForTMDb(locale);
+
   url.searchParams.append('query', title);
+  url.searchParams.append('language', tmdbLocale);
   if (year) {
     url.searchParams.append('year', year.toString());
   }
@@ -79,9 +91,12 @@ const searchMovie = async (title: string, year: number): Promise<number | null> 
   }
 };
 
-const getMovieDetails = async (movieId: number): Promise<Partial<MovieRecommendation>> => {
+const getMovieDetails = async (movieId: number, locale: string): Promise<Partial<MovieRecommendation>> => {
   const url = new URL(`${BASE_URL}/movie/${movieId}`);
+  const tmdbLocale = formatLocaleForTMDb(locale);
+
   url.searchParams.append('append_to_response', 'credits,external_ids');
+  url.searchParams.append('language', tmdbLocale);
 
   const options = {
     method: 'GET',
@@ -100,6 +115,7 @@ const getMovieDetails = async (movieId: number): Promise<Partial<MovieRecommenda
     const cast = data.credits.cast.slice(0, 4).map(c => c.name);
 
     return {
+      posterPath: data.poster_path,
       synopsis: data.overview,
       runtime: data.runtime,
       rating: { score: data.vote_average, source: 'TMDb' },
@@ -116,7 +132,7 @@ const getMovieDetails = async (movieId: number): Promise<Partial<MovieRecommenda
 const getWatchProviders = async (movieId: number, locale: string): Promise<WatchProvider[]> => {
   const countryCode = locale.split('-')[1]?.toUpperCase() || 'US';
   const url = new URL(`${BASE_URL}/movie/${movieId}/watch/providers`);
-  
+
   const options = {
     method: 'GET',
     headers: {
@@ -145,14 +161,14 @@ const getWatchProviders = async (movieId: number, locale: string): Promise<Watch
 };
 
 export const fetchMovieDetailsFromTMDb = async (title: string, year: number, locale: string): Promise<Partial<MovieRecommendation>> => {
-  const movieId = await searchMovie(title, year);
+  const movieId = await searchMovie(title, year, locale);
   if (!movieId) {
     console.warn(`Movie "${title}" (${year}) not found on TMDb.`);
     return {};
   }
 
   const [details, providers] = await Promise.all([
-    getMovieDetails(movieId),
+    getMovieDetails(movieId, locale),
     getWatchProviders(movieId, locale)
   ]);
 

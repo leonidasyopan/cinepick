@@ -1,4 +1,5 @@
 
+
 export interface RefinementPair {
   optionA: string;
   optionB: string;
@@ -31,6 +32,7 @@ export interface MovieRecommendation {
   justification: string;
   trailerSearchQuery: string;
   // --- New fields from TMDb ---
+  posterPath?: string;
   synopsis?: string;
   runtime?: number; // in minutes
   rating?: {
