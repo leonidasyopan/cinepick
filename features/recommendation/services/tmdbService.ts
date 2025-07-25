@@ -37,6 +37,7 @@ interface TmdbMovieDetails {
   runtime: number;
   vote_average: number;
   release_date: string;
+  poster_path: string | null;
   credits: {
     cast: { name: string; order: number }[];
     crew: { name: string; job: string }[];
@@ -115,7 +116,7 @@ const getMovieDetails = async (movieId: number, locale: string): Promise<Partial
     const cast = data.credits.cast.slice(0, 4).map(c => c.name);
 
     return {
-      posterPath: data.poster_path,
+      posterPath: data.poster_path ?? undefined,
       synopsis: data.overview,
       runtime: data.runtime,
       rating: { score: data.vote_average, source: 'TMDb' },
