@@ -15,8 +15,8 @@
     "errorFetchingRecommendation": "Desculpe, não consegui pensar em um filme agora. Por favor, tente novamente."
   },
   "moodSelector": {
-    "title": "Como você está se sentindo {timeOfDay}?",
-    "subtitle": "Toque em um humor para selecionar, ou arraste para girar."
+    "title": "Qual o clima para o filme {timeOfDay}?",
+    "subtitle": "Escolha um dos sentimentos para começar."
   },
   "subMoodStep": {
     "title": "Que tipo de \"{mood}\"?"
