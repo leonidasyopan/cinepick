@@ -25,7 +25,7 @@ export const supportedLanguages: { code: Language; name: string }[] = [
 ];
 
 const SPANISH_SPEAKING_COUNTRIES = [
-    'ES', 'MX', 'AR', 'CO', 'PE', 'VE', 'CL', 'EC', 'GT', 'CU', 'BO', 
+    'ES', 'MX', 'AR', 'CO', 'PE', 'VE', 'CL', 'EC', 'GT', 'CU', 'BO',
     'DO', 'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'PR', 'GQ'
 ];
 
@@ -54,10 +54,13 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // 2. Try Geolocation API for automatic detection
             try {
-                const response = await fetch('https://ip-api.com/json/?fields=countryCode');
-                if (!response.ok) throw new Error('IP API fetch failed');
+                // Switched to ipapi.co because it supports HTTPS on the free tier
+                const response = await fetch('https://ipapi.co/json/');
+                if (!response.ok) throw new Error('IP Geolocation API fetch failed');
                 const data = await response.json();
-                const country: string = data.countryCode;
+
+                // ipapi.co uses 'country_code'
+                const country: string = data.country_code;
 
                 if (country === 'BR') {
                     setLocale('pt-br');
@@ -70,7 +73,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             } catch (error) {
                 console.warn('Could not detect location, falling back to browser language.', error);
             }
-            
+
             // 3. Fallback to browser language if geolocation fails or doesn't match a rule
             const browserLang = navigator.language.toLowerCase();
             const matchedLocale = supportedLanguages.find(l => browserLang.startsWith(l.code.split('-')[0]));

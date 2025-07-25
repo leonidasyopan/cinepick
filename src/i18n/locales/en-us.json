@@ -52,7 +52,7 @@
       "subMoods": {
         "cathartic": "A good cry to let it all out",
         "heartwarming": "Something bittersweet and heartwarming",
-        "tragic": "A tragic story that will stick with me"
+        "tragic": "A tragic, poetic story"
       }
     },
     "Laughing": {
@@ -60,15 +60,15 @@
       "subMoods": {
         "light": "Lighthearted & Wholesome",
         "witty": "Witty & Sarcastic",
-        "absurd": "Absurd & Over-the-Top"
+        "absurd": "Absurd & Goofy"
       }
     },
     "Wondering": {
       "label": "Wonder",
       "subMoods": {
-        "mindbending": "A mind-bending mystery or thriller",
-        "epic": "An epic adventure in another world",
-        "documentary": "A thought-provoking documentary"
+        "mindbending": "A mind-bending puzzle",
+        "epic": "An epic adventure",
+        "documentary": "A reflective documentary"
       }
     }
   },
@@ -81,170 +81,206 @@
   "refinements": {
     "Laughing": {
       "light": {
-        "solo": [
-          { "optionA": "Slice-of-Life Comedy", "optionB": "Cynical Satire", "description": "Wholesome look at life vs. ironic critique of it." },
-          { "optionA": "Animated Wholesome Film", "optionB": "Melancholy Indie Dramedy", "description": "Optimism vs. quiet emotional depth." }
-        ],
-        "friends": [
-          { "optionA": "Feel-Good Ensemble Comedy", "optionB": "Dark Comedy of Manners", "description": "Friendship and joy vs. social critique and sarcasm." },
-          { "optionA": "Musical Comedy", "optionB": "Deadpan Humor", "description": "Energetic and joyful vs. flat, ironic delivery." }
-        ],
-        "date": [
-          { "optionA": "Romantic Comedy", "optionB": "Dark Romantic Comedy", "description": "Light love vs. twisted affection." },
-          { "optionA": "Musical Romance", "optionB": "Witty Relationship Dramas", "description": "Emotion through song vs. realism through dialogue." }
-        ],
-        "family": [
-          { "optionA": "Animated Comedy", "optionB": "Classic Sitcom Revival", "description": "Timeless charm vs. nostalgic adult humor." },
-          { "optionA": "Animal Adventures", "optionB": "Absurdist Family Comedy", "description": "Cuddly and cute vs. chaotic and weird." }
-        ]
+        "solo": {
+          "0": { "optionA": "Slice-of-Life Comedy", "optionB": "Cynical Satire", "description": "Wholesome look at life vs. ironic critique of it." },
+          "1": { "optionA": "Animated Wholesome Film", "optionB": "Melancholy Indie Dramedy", "description": "Optimism vs. quiet emotional depth." },
+          "2": { "optionA": "Gentle Comedy-Documentary", "optionB": "Lonely Road Movie", "description": "Light learning vs. self-reflection on the move." }
+        },
+        "friends": {
+          "0": { "optionA": "Feel-Good Ensemble Comedy", "optionB": "Dark Comedy of Manners", "description": "Friendship and joy vs. social critique and sarcasm." },
+          "1": { "optionA": "Musical Comedy", "optionB": "Deadpan Humor", "description": "Energetic and joyful vs. flat, ironic delivery." },
+          "2": { "optionA": "Holiday-Themed Comedy", "optionB": "Coming-of-Age Drama", "description": "Celebration vs. internal conflict in growth." }
+        },
+        "date": {
+          "0": { "optionA": "Romantic Comedy", "optionB": "Dark Romantic Comedy", "description": "Light love vs. twisted affection." },
+          "1": { "optionA": "Musical Romance", "optionB": "Witty Relationship Dramas", "description": "Emotion through song vs. realism through dialogue." },
+          "2": { "optionA": "Feel-Good Fantasy", "optionB": "Melancholic Sci-Fi Romance", "description": "Fairy-tale vibes vs. philosophical love." }
+        },
+        "family": {
+          "0": { "optionA": "Animated Comedy", "optionB": "Classic Sitcom Revival", "description": "Timeless charm vs. nostalgic adult humor." },
+          "1": { "optionA": "Animal Adventures", "optionB": "Absurdist Family Comedy", "description": "Cuddly and cute vs. chaotic and weird." },
+          "2": { "optionA": "Inspirational Sports Comedy", "optionB": "Mockumentary Style", "description": "Uplift vs. parody." }
+        }
       },
       "witty": {
-        "solo": [
-          { "optionA": "Satirical Comedy", "optionB": "Philosophical Drama", "description": "Laughing at society vs. questioning it deeply." },
-          { "optionA": "Clever Crime Comedy", "optionB": "Noir-Inspired Melancholy", "description": "Sharp humor vs. brooding introspection." }
-        ],
-        "friends": [
-          { "optionA": "Dark Comedy", "optionB": "Slapstick Parody", "description": "Smart cynicism vs. physical chaos." },
-          { "optionA": "Political Satire", "optionB": "Stoner Comedy", "description": "Sharp critique vs. absurd escapism." }
-        ],
-        "date": [
-          { "optionA": "Witty Romantic Comedy", "optionB": "Biting Breakup Comedy", "description": "Playful love vs. caustic relationships." },
-          { "optionA": "Dialogue-Driven Indie Comedy", "optionB": "Screwball Chaos", "description": "Cerebral repartee vs. wild miscommunication." }
-        ],
-        "family": [
-          { "optionA": "Animated Satire", "optionB": "Classic Feel-Good Animation", "description": "Clever critique vs. cheerful simplicity." },
-          { "optionA": "Irony-Laced Coming-of-Age", "optionB": "Wholesome Growth Stories", "description": "Cynical adolescence vs. hopeful learning." }
-        ]
+        "solo": {
+          "0": { "optionA": "Satirical Comedy", "optionB": "Philosophical Drama", "description": "Laughing at society vs. questioning it deeply." },
+          "1": { "optionA": "Clever Crime Comedy", "optionB": "Noir-Inspired Melancholy", "description": "Sharp humor vs. brooding introspection." },
+          "2": { "optionA": "Dry British Comedy", "optionB": "Existentialist Indie", "description": "Understated wit vs. quiet despair." }
+        },
+        "friends": {
+          "0": { "optionA": "Dark Comedy", "optionB": "Slapstick Parody", "description": "Smart cynicism vs. physical chaos." },
+          "1": { "optionA": "Political Satire", "optionB": "Stoner Comedy", "description": "Sharp critique vs. absurd escapism." },
+          "2": { "optionA": "Sharp Social Comedy", "optionB": "Mockumentary", "description": "Savvy commentary vs. meta-humor." }
+        },
+        "date": {
+          "0": { "optionA": "Witty Romantic Comedy", "optionB": "Biting Breakup Comedy", "description": "Playful love vs. caustic relationships." },
+          "1": { "optionA": "Dialogue-Driven Indie Comedy", "optionB": "Screwball Chaos", "description": "Cerebral repartee vs. wild miscommunication." },
+          "2": { "optionA": "Elegant Period Comedy", "optionB": "Cringe Comedy", "description": "Refined wit vs. awkward realism." }
+        },
+        "family": {
+          "0": { "optionA": "Animated Satire", "optionB": "Classic Feel-Good Animation", "description": "Clever critique vs. cheerful simplicity." },
+          "1": { "optionA": "Irony-Laced Coming-of-Age", "optionB": "Wholesome Growth Stories", "description": "Cynical adolescence vs. hopeful learning." },
+          "2": { "optionA": "Parent-Focused Comedy", "optionB": "Childlike Absurdist Fun", "description": "Modern family struggles vs. carefree antics." }
+        }
       },
       "absurd": {
-        "solo": [
-          { "optionA": "Absurdist Comedy", "optionB": "Philosophical Absurdism", "description": "Zany nonsense vs. Camus-style reflection." },
-          { "optionA": "Surreal Animated Comedy", "optionB": "Deadpan Anti-Comedy", "description": "Hypercolor madness vs. stoic humor." }
-        ],
-        "friends": [
-          { "optionA": "Slapstick Comedy", "optionB": "Cerebral Comedy", "description": "Physical nonsense vs. smart subtlety." },
-          { "optionA": "Cult Parody", "optionB": "Socially Awkward Humor", "description": "Extreme antics vs. cringe realism." }
-        ],
-        "date": [
-          { "optionA": "Romantic Absurdist Comedy", "optionB": "Grounded Love Story", "description": "Time loops & weirdness vs. emotional realism." },
-          { "optionA": "Musical Farce", "optionB": "Indie Romance with Sarcasm", "description": "Loud ridiculous fun vs. dry romantic wit." }
-        ],
-        "family": [
-          { "optionA": "Animated Chaos", "optionB": "Classic Calm Family Tale", "description": "High-energy overload vs. gentle narrative." },
-          { "optionA": "Fantasy Adventure Comedy", "optionB": "Heartfelt Animation", "description": "Ridiculous world-building vs. emotional connection." }
-        ]
+        "solo": {
+          "0": { "optionA": "Absurdist Comedy", "optionB": "Philosophical Absurdism", "description": "Zany nonsense vs. Camus-style reflection." },
+          "1": { "optionA": "Surreal Animated Comedy", "optionB": "Deadpan Anti-Comedy", "description": "Hypercolor madness vs. stoic humor." },
+          "2": { "optionA": "Meta-Comedy", "optionB": "Slow-Paced Indie Satire", "description": "Self-aware wildness vs. subtle weirdness." }
+        },
+        "friends": {
+          "0": { "optionA": "Slapstick Comedy", "optionB": "Cerebral Comedy", "description": "Physical nonsense vs. smart subtlety." },
+          "1": { "optionA": "Cult Parody", "optionB": "Socially Awkward Humor", "description": "Extreme antics vs. cringe realism." },
+          "2": { "optionA": "Improvised Ensemble Comedy", "optionB": "Dark Humor Game Night", "description": "Chaotic spontaneity vs. twisted party themes." }
+        },
+        "date": {
+          "0": { "optionA": "Romantic Absurdist Comedy", "optionB": "Grounded Love Story", "description": "Time loops & weirdness vs. emotional realism." },
+          "1": { "optionA": "Musical Farce", "optionB": "Indie Romance with Sarcasm", "description": "Loud ridiculous fun vs. dry romantic wit." },
+          "2": { "optionA": "Fantasy Comedy", "optionB": "Bittersweet Comedy-Drama", "description": "Playful whimsy vs. emotional undercurrent." }
+        },
+        "family": {
+          "0": { "optionA": "Animated Chaos", "optionB": "Classic Calm Family Tale", "description": "High-energy overload vs. gentle narrative." },
+          "1": { "optionA": "Fantasy Adventure Comedy", "optionB": "Heartfelt Animation", "description": "Ridiculous world-building vs. emotional connection." },
+          "2": { "optionA": "Talking Animal Comedy", "optionB": "Slice-of-Life Family Film", "description": "Wild hijinks vs. ordinary magic." }
+        }
       }
     },
     "Crying": {
       "cathartic": {
-        "solo": [
-          { "optionA": "Emotional Drama", "optionB": "Detached Minimalist Film", "description": "Deep feeling vs. quiet emptiness." },
-          { "optionA": "Personal Tragedy", "optionB": "Hopeful Redemption Story", "description": "Rock bottom vs. rising again." }
-        ],
-        "friends": [
-          { "optionA": "Friendship Melodrama", "optionB": "Biting Drama-Comedy", "description": "Tearful bonds vs. sharp edge." },
-          { "optionA": "Disaster Film with Heart", "optionB": "Crisis Satire", "description": "Collective grief vs. absurd take on chaos." }
-        ],
-        "date": [
-          { "optionA": "Romantic Melodrama", "optionB": "Breakup Indie", "description": "Sweeping tragedy vs. quiet collapse." },
-          { "optionA": "Slow-Burn Love Story", "optionB": "Unsentimental Romance", "description": "Emotional highs vs. realism." }
-        ],
-        "family": [
-          { "optionA": "Inspirational Family Drama", "optionB": "Loss & Growth Story", "description": "Overcoming vs. enduring." },
-          { "optionA": "Animal Companion Tearjerker", "optionB": "Wartime Family Separation", "description": "Cute sadness vs. historical pain." }
-        ]
+        "solo": {
+          "0": { "optionA": "Emotional Drama", "optionB": "Detached Minimalist Film", "description": "Deep feeling vs. quiet emptiness." },
+          "1": { "optionA": "Personal Tragedy", "optionB": "Hopeful Redemption Story", "description": "Rock bottom vs. rising again." },
+          "2": { "optionA": "Raw Indie Grief Film", "optionB": "Lyrical Visual Poem", "description": "Brutal honesty vs. aesthetic emotion." }
+        },
+        "friends": {
+          "0": { "optionA": "Friendship Melodrama", "optionB": "Biting Drama-Comedy", "description": "Tearful bonds vs. sharp edge." },
+          "1": { "optionA": "Disaster Film with Heart", "optionB": "Crisis Satire", "description": "Collective grief vs. absurd take on chaos." },
+          "2": { "optionA": "Coming-of-Age Trauma", "optionB": "Playful Bittersweet Nostalgia", "description": "Heavy adolescence vs. reflective charm." }
+        },
+        "date": {
+          "0": { "optionA": "Romantic Melodrama", "optionB": "Breakup Indie", "description": "Sweeping tragedy vs. quiet collapse." },
+          "1": { "optionA": "Slow-Burn Love Story", "optionB": "Unsentimental Romance", "description": "Emotional highs vs. realism." },
+          "2": { "optionA": "Period Love Tragedy", "optionB": "Modern Emotional Disconnection", "description": "Historic pain vs. digital-era alienation." }
+        },
+        "family": {
+          "0": { "optionA": "Inspirational Family Drama", "optionB": "Loss & Growth Story", "description": "Overcoming vs. enduring." },
+          "1": { "optionA": "Animal Companion Tearjerker", "optionB": "Wartime Family Separation", "description": "Cute sadness vs. historical pain." },
+          "2": { "optionA": "Animated Grief Tale", "optionB": "Uplifting Real-Life Adaptation", "description": "Gentle tears vs. real triumph." }
+        }
       },
       "heartwarming": {
-        "solo": [
-          { "optionA": "Quiet Feel-Good Drama", "optionB": "Existential Indie", "description": "Warmth vs. meaning-searching." },
-          { "optionA": "Memoir-Based Film", "optionB": "Fictionalized Biography", "description": "Personal connection vs. literary distance." }
-        ],
-        "friends": [
-          { "optionA": "Found-Family Story", "optionB": "Disillusioned Friendship Tale", "description": "Love that builds vs. love that fades." },
-          { "optionA": "Holiday-Themed Heartwarmer", "optionB": "Irony-Laced Dramedy", "description": "Togetherness vs. realism." }
-        ],
-        "date": [
-          { "optionA": "Love Against All Odds", "optionB": "Lonely But Loving Story", "description": "Big feeling vs. small comfort." },
-          { "optionA": "Slow-Build Romance", "optionB": "Melancholic Comedy", "description": "Sweet vs. subtly sad." }
-        ],
-        "family": [
-          { "optionA": "Parent-Child Bond Film", "optionB": "Loss & Recovery Story", "description": "Tight family vs. grief process." },
-          { "optionA": "Inspirational Sports Drama", "optionB": "Quiet Small-Town Story", "description": "Victory arc vs. gentle lesson." }
-        ]
+        "solo": {
+          "0": { "optionA": "Quiet Feel-Good Drama", "optionB": "Existential Indie", "description": "Warmth vs. meaning-searching." },
+          "1": { "optionA": "Memoir-Based Film", "optionB": "Fictionalized Biography", "description": "Personal connection vs. literary distance." },
+          "2": { "optionA": "Slice-of-Life Uplift", "optionB": "Lonely Reflection Piece", "description": "Subtle joy vs. solitude." }
+        },
+        "friends": {
+          "0": { "optionA": "Found-Family Story", "optionB": "Disillusioned Friendship Tale", "description": "Love that builds vs. love that fades." },
+          "1": { "optionA": "Holiday-Themed Heartwarmer", "optionB": "Irony-Laced Dramedy", "description": "Togetherness vs. realism." },
+          "2": { "optionA": "Musical with Emotion", "optionB": "Low-Key Ensemble Piece", "description": "Soaring feeling vs. grounded intimacy." }
+        },
+        "date": {
+          "0": { "optionA": "Love Against All Odds", "optionB": "Lonely But Loving Story", "description": "Big feeling vs. small comfort." },
+          "1": { "optionA": "Slow-Build Romance", "optionB": "Melancholic Comedy", "description": "Sweet vs. subtly sad." },
+          "2": { "optionA": "Animated Love Tale", "optionB": "Philosophical Sci-Fi Love", "description": "Universal emotion vs. abstract meaning." }
+        },
+        "family": {
+          "0": { "optionA": "Parent-Child Bond Film", "optionB": "Loss & Recovery Story", "description": "Tight family vs. grief process." },
+          "1": { "optionA": "Inspirational Sports Drama", "optionB": "Quiet Small-Town Story", "description": "Victory arc vs. gentle lesson." },
+          "2": { "optionA": "Animal & Kid Tale", "optionB": "Grandparent Stories", "description": "Cute loyalty vs. generational love." }
+        }
       },
       "tragic": {
-        "solo": [
-          { "optionA": "Art-House Tragedy", "optionB": "Detached Visual Masterpiece", "description": "Emotional spiral vs. dreamlike metaphor." },
-          { "optionA": "Foreign Language Drama", "optionB": "Minimalist Philosophy Film", "description": "Rich sorrow vs. abstract beauty." }
-        ],
-        "friends": [
-          { "optionA": "Shakespearean Adaptation", "optionB": "Modern Love Tragedy", "description": "Classic doom vs. contemporary heartbreak." },
-          { "optionA": "Stylized Tragic Love Story", "optionB": "Emo Indie Drama", "description": "Beautiful despair vs. raw angst." }
-        ],
-        "date": [
-          { "optionA": "Star-Crossed Lovers Tale", "optionB": "Bittersweet Sci-Fi", "description": "Epic doom vs. introspective wonder." },
-          { "optionA": "Ethereal Romance", "optionB": "Sharp Breakup Film", "description": "Dreamlike bond vs. raw disillusion." }
-        ],
-        "family": [
-          { "optionA": "Generational Trauma Story", "optionB": "Cultural Memory Piece", "description": "Inherited pain vs. collective reflection." },
-          { "optionA": "Coming-of-Age in Hard Times", "optionB": "Fable-Like Drama", "description": "Hard truth vs. magical sadness." }
-        ]
+        "solo": {
+          "0": { "optionA": "Art-House Tragedy", "optionB": "Detached Visual Masterpiece", "description": "Emotional spiral vs. dreamlike metaphor." },
+          "1": { "optionA": "Foreign Language Drama", "optionB": "Minimalist Philosophy Film", "description": "Rich sorrow vs. abstract beauty." },
+          "2": { "optionA": "Mythic Tragedy", "optionB": "Existential Sci-Fi", "description": "Fate vs. absurdity." }
+        },
+        "friends": {
+          "0": { "optionA": "Shakespearean Adaptation", "optionB": "Modern Love Tragedy", "description": "Classic doom vs. contemporary heartbreak." },
+          "1": { "optionA": "Stylized Tragic Love Story", "optionB": "Emo Indie Drama", "description": "Beautiful despair vs. raw angst." },
+          "2": { "optionA": "Epic War Love", "optionB": "Slow-Burn Domestic Collapse", "description": "External battles vs. internal breakdown." }
+        },
+        "date": {
+          "0": { "optionA": "Star-Crossed Lovers Tale", "optionB": "Bittersweet Sci-Fi", "description": "Epic doom vs. introspective wonder." },
+          "1": { "optionA": "Ethereal Romance", "optionB": "Sharp Breakup Film", "description": "Dreamlike bond vs. raw disillusion." },
+          "2": { "optionA": "Foreign Poetic Love", "optionB": "Modern Alienation", "description": "Language of love vs. silence of distance." }
+        },
+        "family": {
+          "0": { "optionA": "Generational Trauma Story", "optionB": "Cultural Memory Piece", "description": "Inherited pain vs. collective reflection." },
+          "1": { "optionA": "Coming-of-Age in Hard Times", "optionB": "Fable-Like Drama", "description": "Hard truth vs. magical sadness." },
+          "2": { "optionA": "Historical Family Collapse", "optionB": "Reconciliation Drama", "description": "Loss vs. repair." }
+        }
       }
     },
     "Wondering": {
       "mindbending": {
-        "solo": [
-          { "optionA": "Existential Sci-Fi", "optionB": "Spiritual Allegory", "description": "Technology vs. transcendence." },
-          { "optionA": "Psychological Thriller", "optionB": "Abstract Art Film", "description": "Perception games vs. dream logic." }
-        ],
-        "friends": [
-          { "optionA": "Sci-Fi Social Experiment", "optionB": "Satirical Dystopia", "description": "What if... vs. what now?" },
-          { "optionA": "Twisty Narrative Puzzle", "optionB": "Meta Film", "description": "Unraveling plot vs. self-aware chaos." }
-        ],
-        "date": [
-          { "optionA": "Sci-Fi Romance", "optionB": "Memory Puzzle", "description": "Futuristic love vs. forgotten love." },
-          { "optionA": "Time Loop Rom-Com", "optionB": "Cerebral Disconnection Tale", "description": "Playful vs. philosophical." }
-        ],
-        "family": [
-          { "optionA": "Animated Sci-Fi", "optionB": "Quiet Philosophical Tale", "description": "Imaginative vs. meditative." },
-          { "optionA": "Adventure Through Dimensions", "optionB": "Emotional Simplicity", "description": "Big spectacle vs. soft focus." }
-        ]
+        "solo": {
+          "0": { "optionA": "Existential Sci-Fi", "optionB": "Spiritual Allegory", "description": "Technology vs. transcendence." },
+          "1": { "optionA": "Psychological Thriller", "optionB": "Abstract Art Film", "description": "Perception games vs. dream logic." },
+          "2": { "optionA": "Time-Bending Mystery", "optionB": "Surreal Slow Burn", "description": "Puzzle vs. atmosphere." }
+        },
+        "friends": {
+          "0": { "optionA": "Sci-Fi Social Experiment", "optionB": "Satirical Dystopia", "description": "What if... vs. what now?" },
+          "1": { "optionA": "Twisty Narrative Puzzle", "optionB": "Meta Film", "description": "Unraveling plot vs. self-aware chaos." },
+          "2": { "optionA": "Intense Drama with a Twist", "optionB": "Campy Mind Trip", "description": "Serious vs. bizarre fun." }
+        },
+        "date": {
+          "0": { "optionA": "Sci-Fi Romance", "optionB": "Memory Puzzle", "description": "Futuristic love vs. forgotten love." },
+          "1": { "optionA": "Time Loop Rom-Com", "optionB": "Cerebral Disconnection Tale", "description": "Playful vs. philosophical." },
+          "2": { "optionA": "Alternate Reality Thriller", "optionB": "Poetic Experimental Romance", "description": "High stakes vs. vibe-driven story." }
+        },
+        "family": {
+          "0": { "optionA": "Animated Sci-Fi", "optionB": "Quiet Philosophical Tale", "description": "Imaginative vs. meditative." },
+          "1": { "optionA": "Adventure Through Dimensions", "optionB": "Emotional Simplicity", "description": "Big spectacle vs. soft focus." },
+          "2": { "optionA": "Fantasy Metaphor Film", "optionB": "Coming-of-Age Spiritual Quest", "description": "Symbolic vs. soul-searching." }
+        }
       },
       "epic": {
-        "solo": [
-          { "optionA": "Hero’s Journey Film", "optionB": "Anti-Hero Saga", "description": "Hopeful vs. morally complex." },
-          { "optionA": "Historical Epic", "optionB": "Post-Apocalyptic Solitude", "description": "Large-scale conflict vs. quiet survival." }
-        ],
-        "friends": [
-          { "optionA": "Action-Adventure Blockbuster", "optionB": "Mock Epic", "description": "Thrill ride vs. parody." },
-          { "optionA": "Heist Ensemble", "optionB": "Messy Misfit Comedy", "description": "Precision vs. chaos." }
-        ],
-        "date": [
-          { "optionA": "Romantic Epic", "optionB": "Tragic Hero's Journey", "description": "Love & war vs. sacrifice." },
-          { "optionA": "Fantasy Romance", "optionB": "Survival Bonding Film", "description": "Magical intimacy vs. tested connection." }
-        ],
-        "family": [
-          { "optionA": "Animated Fantasy Adventure", "optionB": "Realistic Coming-of-Age Journey", "description": "Magic vs. maturity." },
-          { "optionA": "Family Quest Comedy", "optionB": "Cultural Heritage Epic", "description": "Laughs vs. legacy." }
-        ]
+        "solo": {
+          "0": { "optionA": "Hero’s Journey Film", "optionB": "Anti-Hero Saga", "description": "Hopeful vs. morally complex." },
+          "1": { "optionA": "Historical Epic", "optionB": "Post-Apocalyptic Solitude", "description": "Large-scale conflict vs. quiet survival." },
+          "2": { "optionA": "Fantasy Classic", "optionB": "Myth Retelling", "description": "Escapist vs. deconstructive." }
+        },
+        "friends": {
+          "0": { "optionA": "Action-Adventure Blockbuster", "optionB": "Mock Epic", "description": "Thrill ride vs. parody." },
+          "1": { "optionA": "Heist Ensemble", "optionB": "Messy Misfit Comedy", "description": "Precision vs. chaos." },
+          "2": { "optionA": "Fantasy Team-Up", "optionB": "Outrageous Road Trip", "description": "Quest vs. absurdity." }
+        },
+        "date": {
+          "0": { "optionA": "Romantic Epic", "optionB": "Tragic Hero's Journey", "description": "Love & war vs. sacrifice." },
+          "1": { "optionA": "Fantasy Romance", "optionB": "Survival Bonding Film", "description": "Magical intimacy vs. tested connection." },
+          "2": { "optionA": "Historical Love Quest", "optionB": "Existential Mythology", "description": "Real passion vs. metaphysical journey." }
+        },
+        "family": {
+          "0": { "optionA": "Animated Fantasy Adventure", "optionB": "Realistic Coming-of-Age Journey", "description": "Magic vs. maturity." },
+          "1": { "optionA": "Family Quest Comedy", "optionB": "Cultural Heritage Epic", "description": "Laughs vs. legacy." },
+          "2": { "optionA": "Classic Hero Story", "optionB": "Multi-Generational Saga", "description": "Archetype vs. lineage." }
+        }
       },
       "documentary": {
-        "solo": [
-          { "optionA": "Philosophical Documentary", "optionB": "Silent Nature Film", "description": "Intellectual vs. contemplative." },
-          { "optionA": "True Story Reenactment", "optionB": "Experimental Visual Essay", "description": "Factual vs. abstract." }
-        ],
-        "friends": [
-          { "optionA": "Culture-Focused Doc", "optionB": "Satirical Reenactment", "description": "Respectful vs. ironic." },
-          { "optionA": "Investigative Journalism Doc", "optionB": "Spoof Conspiracy Film", "description": "Serious digging vs. ridiculous fake truth." }
-        ],
-        "date": [
-          { "optionA": "Love Story Doc", "optionB": "Unromantic Portrait", "description": "Emotional truth vs. cold reality." },
-          { "optionA": "Couples Exploring Life", "optionB": "Single-Person Reflection", "description": "Together vs. apart." }
-        ],
-        "family": [
-          { "optionA": "Uplifting Educational Doc", "optionB": "Tearjerking Biography", "description": "Inspiration vs. emotion." },
-          { "optionA": "Eco-Nature Doc", "optionB": "Cultural Family Story", "description": "Planet vs. people." }
-        ]
+        "solo": {
+          "0": { "optionA": "Philosophical Documentary", "optionB": "Silent Nature Film", "description": "Intellectual vs. contemplative." },
+          "1": { "optionA": "True Story Reenactment", "optionB": "Experimental Visual Essay", "description": "Factual vs. abstract." },
+          "2": { "optionA": "Science Doc", "optionB": "Existential Biopic", "description": "Knowledge vs. identity." }
+        },
+        "friends": {
+          "0": { "optionA": "Culture-Focused Doc", "optionB": "Satirical Reenactment", "description": "Respectful vs. ironic." },
+          "1": { "optionA": "Investigative Journalism Doc", "optionB": "Spoof Conspiracy Film", "description": "Serious digging vs. ridiculous fake truth." },
+          "2": { "optionA": "Adventure Doc", "optionB": "Mockumentary Road Trip", "description": "Awe vs. absurdity." }
+        },
+        "date": {
+          "0": { "optionA": "Love Story Doc", "optionB": "Unromantic Portrait", "description": "Emotional truth vs. cold reality." },
+          "1": { "optionA": "Couples Exploring Life", "optionB": "Single-Person Reflection", "description": "Together vs. apart." },
+          "2": { "optionA": "Visual Poetic Essay", "optionB": "Hard-Hitting Real-Life Romance", "description": "Dreamlike vs. grounded." }
+        },
+        "family": {
+          "0": { "optionA": "Uplifting Educational Doc", "optionB": "Tearjerking Biography", "description": "Inspiration vs. emotion." },
+          "1": { "optionA": "Eco-Nature Doc", "optionB": "Cultural Family Story", "description": "Planet vs. people." },
+          "2": { "optionA": "Kid-Friendly Learning Doc", "optionB": "Emotional Animated Short Compilation", "description": "Fun facts vs. short-form insight." }
+        }
       }
     }
   }
