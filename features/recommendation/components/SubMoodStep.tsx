@@ -14,7 +14,7 @@ interface SubMoodStepProps {
 const SubMoodStep: React.FC<SubMoodStepProps> = ({ onNext, onBack, answers }) => {
     const { t } = useI18n();
     const moodLabel = answers.mood ? t(`moods.${answers.mood}.label`) : '';
-    
+
     return (
         <StepContainer title={t('subMoodStep.title', { mood: moodLabel })} onBack={onBack}>
             <div className="flex flex-col items-center gap-4">
@@ -22,7 +22,7 @@ const SubMoodStep: React.FC<SubMoodStepProps> = ({ onNext, onBack, answers }) =>
                     <button
                         key={subMood.id}
                         onClick={() => onNext({ subMood: subMood.id })}
-                        className="w-full max-w-md bg-primary hover:bg-accent text-text-primary font-semibold py-3 px-6 rounded-full shadow-md transform hover:scale-105 transition-all duration-300 ease-in-out text-lg"
+                        className="w-full max-w-md bg-accent text-background hover:opacity-90 font-semibold py-3 px-6 rounded-full shadow-md transform hover:scale-105 transition-all duration-300 ease-in-out text-lg"
                     >
                         {t(subMood.labelKey)}
                     </button>

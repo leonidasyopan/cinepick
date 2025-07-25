@@ -27,11 +27,11 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 
     const validHighlights = highlights.filter(h => h && typeof h === 'string' && h.trim() !== '');
     if (!validHighlights.length) return <>{text}</>;
-    
+
     const escapeRegex = (str: string) => str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(`(${validHighlights.map(escapeRegex).join('|')})`, 'gi');
     const parts = text.split(regex);
-    
+
     return (
         <span>
             {parts.map((part, i) =>
@@ -48,7 +48,7 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 export const RecommendationScreen: React.FC<RecommendationScreenProps> = ({ recommendation, answers, onTryAgain, onBack }) => {
     const { t, getTranslatedAnswer } = useI18n();
     const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(recommendation.trailerSearchQuery)}`;
-    
+
     const translatedAnswers = getTranslatedAnswer(answers);
     const highlights = [
         translatedAnswers.subMood,
@@ -59,10 +59,10 @@ export const RecommendationScreen: React.FC<RecommendationScreenProps> = ({ reco
     return (
         <div className="w-full max-w-4xl mx-auto animate-fade-in flex flex-col lg:flex-row gap-8 items-center lg:items-start">
             <div className="flex-shrink-0 w-64 md:w-80">
-                <img 
-                    src={`https://picsum.photos/seed/${encodeURIComponent(recommendation.title)}/500/750`} 
+                <img
+                    src={`https://picsum.photos/seed/${encodeURIComponent(recommendation.title)}/500/750`}
                     alt={`Poster for ${recommendation.title}`}
-                    className="w-full h-auto rounded-lg shadow-2xl shadow-accent/10 object-cover" 
+                    className="w-full h-auto rounded-lg shadow-2xl shadow-accent/10 object-cover"
                 />
             </div>
 
@@ -75,8 +75,8 @@ export const RecommendationScreen: React.FC<RecommendationScreenProps> = ({ reco
 
                 <div className="bg-surface/50 p-6 rounded-lg mb-6">
                     <p className="text-lg text-text-primary/90 leading-relaxed">
-                        <HighlightedText 
-                            text={recommendation.justification} 
+                        <HighlightedText
+                            text={recommendation.justification}
                             highlights={highlights}
                         />
                     </p>
@@ -95,22 +95,22 @@ export const RecommendationScreen: React.FC<RecommendationScreenProps> = ({ reco
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <a 
-                        href={trailerUrl} 
-                        target="_blank" 
+                    <a
+                        href={trailerUrl}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-primary hover:bg-accent text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105"
+                        className="bg-accent text-background hover:opacity-90 font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105"
                     >
                         {t('recommendationScreen.trailerButton')}
                     </a>
-                    <button 
+                    <button
                         onClick={onTryAgain}
-                        className="bg-surface hover:bg-primary text-white font-bold py-3 px-8 rounded-full transition-all duration-300"
+                        className="bg-surface hover:brightness-125 text-text-primary font-bold py-3 px-8 rounded-full transition-all duration-300"
                     >
                         {t('recommendationScreen.tryAgainButton')}
                     </button>
                 </div>
-                 <button 
+                <button
                     onClick={onBack}
                     className="mt-6 text-text-secondary hover:text-text-primary transition-colors duration-300"
                 >

@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { UserAnswers, PartialUserAnswers, MovieRecommendation } from './features/recommendation/types';
 import { getMovieRecommendation } from './features/recommendation/services/geminiService';
 import { RecommendationScreen } from './features/recommendation/components/RecommendationScreen';
@@ -25,16 +25,34 @@ const HASH_STEP_MAP: { [key: string]: number } = Object.entries(STEP_HASH_MAP)
 
 const getStepFromHash = () => HASH_STEP_MAP[window.location.hash.substring(1)] || 1;
 
+// This logic runs BEFORE the first render, during component initialization.
+const initialStep = getStepFromHash();
+// On a fresh load, the application state is always empty.
+// Any step greater than 1 is therefore invalid.
+const isInitialStateSufficient = initialStep <= 1;
 
 const App: React.FC = () => {
     const { t, locale, getTranslatedAnswer } = useI18n();
-    const [step, setStep] = useState(getStepFromHash());
+    // Initialize step state based on the pre-render check for a safe first render.
+    const [step, setStep] = useState(isInitialStateSufficient ? initialStep : 1);
     const [answers, setAnswers] = useState<PartialUserAnswers>({});
     const [recommendation, setRecommendation] = useState<MovieRecommendation | null>(null);
     const [previousSuggestions, setPreviousSuggestions] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isFading, setIsFading] = useState(false);
+
+    // Refs to hold current state for access inside useEffect without dependencies
+    const answersRef = useRef(answers);
+    answersRef.current = answers;
+    const recommendationRef = useRef(recommendation);
+    recommendationRef.current = recommendation;
+    const isLoadingRef = useRef(isLoading);
+    isLoadingRef.current = isLoading;
+    const stepRef = useRef(step);
+    stepRef.current = step;
+    const isTransitioningRef = useRef(false);
+
 
     const handleReset = useCallback(() => {
         setIsFading(true);
@@ -51,47 +69,71 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        // On first mount, if the initial step was invalid, the state is already set to 1.
+        // Now, we correct the URL hash to match the state, completing the redirect.
+        if (!isInitialStateSufficient) {
+            window.location.hash = STEP_HASH_MAP[1];
+        }
+
         const handleHashChange = () => {
+            if (isTransitioningRef.current) return;
+
             const newStep = getStepFromHash();
-            setStep(currentStep => {
-                if (newStep === currentStep) {
-                    return currentStep;
+            const currentStep = stepRef.current;
+
+            const isStateSufficientForStep = (targetStep: number) => {
+                const currentAnswers = answersRef.current;
+                const currentRecommendation = recommendationRef.current;
+                const currentIsLoading = isLoadingRef.current;
+
+                if (targetStep <= 1) return true;
+                if (targetStep === 2) return !!currentAnswers.mood;
+                if (targetStep === 3) return !!currentAnswers.mood && !!currentAnswers.subMood;
+                if (targetStep === 4) return !!currentAnswers.mood && !!currentAnswers.subMood && !!currentAnswers.occasion;
+                if (targetStep === 5) return currentIsLoading;
+                if (targetStep === 6) return !!currentRecommendation;
+
+                return false;
+            };
+
+            if (!isStateSufficientForStep(newStep)) {
+                if (window.location.hash !== `#${STEP_HASH_MAP[1]}`) {
+                    window.location.hash = STEP_HASH_MAP[1];
+                } else if (currentStep !== 1) {
+                    setStep(1);
+                }
+                return;
+            }
+
+            if (newStep === currentStep) return;
+
+            isTransitioningRef.current = true;
+            setIsFading(true);
+
+            setTimeout(() => {
+                if (newStep < currentStep) {
+                    setAnswers(currentAnswers => {
+                        const newAnswers: PartialUserAnswers = { ...currentAnswers };
+                        if (newStep < 4) delete newAnswers.refinements;
+                        if (newStep < 3) delete newAnswers.occasion;
+                        if (newStep < 2) delete newAnswers.subMood;
+                        return newAnswers;
+                    });
                 }
 
-                setIsFading(true);
-                setTimeout(() => {
-                    if (newStep === 1) {
-                        setAnswers({});
-                        setRecommendation(null);
-                        setPreviousSuggestions([]);
-                        setError(null);
-                        setIsLoading(false);
-                    } else {
-                        setAnswers(currentAnswers => {
-                            const newAnswers: PartialUserAnswers = { ...currentAnswers };
-                            if (newStep < 4) delete newAnswers.refinements;
-                            if (newStep < 3) delete newAnswers.occasion;
-                            if (newStep < 2) delete newAnswers.subMood;
-                            return newAnswers;
-                        });
-                    }
-                    if (!(currentStep === 6 && newStep === 5) && newStep < 6) {
-                        setRecommendation(null);
-                    }
-                    setIsFading(false);
-                }, 300);
+                if (currentStep === 6 && newStep !== 6) {
+                    setRecommendation(null);
+                }
 
-                return newStep;
-            });
+                setStep(newStep);
+                setIsFading(false);
+                isTransitioningRef.current = false;
+            }, 300);
         };
 
         window.addEventListener('hashchange', handleHashChange);
-        if (!window.location.hash || window.location.hash ==='#') {
-            window.location.hash = STEP_HASH_MAP[1];
-        }
-        
         return () => window.removeEventListener('hashchange', handleHashChange);
-    }, []);
+    }, []); // Empty dependency array is intentional to set up a single global listener
 
 
     const fetchRecommendation = useCallback(async (currentAnswers: UserAnswers) => {
@@ -124,7 +166,7 @@ const App: React.FC = () => {
             window.location.hash = STEP_HASH_MAP[nextStep];
         }
     }, [answers, step, fetchRecommendation]);
-    
+
     const handleBack = () => {
         window.history.back();
     };
@@ -142,19 +184,20 @@ const App: React.FC = () => {
     const renderStep = () => {
         switch (step) {
             case 1: return <MoodSelector onSelect={handleNext} />;
-            case 2: return <SubMoodStep onNext={handleNext} onBack={handleBack} answers={answers} />;
-            case 3: return <OccasionStep onNext={handleNext} onBack={handleBack} />;
-            case 4: return <RefinementStep onNext={handleNext} onBack={handleBack} answers={answers} />;
+            case 2: return answers.mood ? <SubMoodStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen />;
+            case 3: return answers.subMood ? <OccasionStep onNext={handleNext} onBack={handleBack} /> : <LoadingScreen />;
+            case 4: return answers.occasion ? <RefinementStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen />;
             case 5: return <LoadingScreen />;
             case 6: return recommendation ? <RecommendationScreen recommendation={recommendation} answers={answers as UserAnswers} onTryAgain={handleTryAgain} onBack={handleBackFromRecs} /> : <LoadingScreen />;
             default:
+                // This default case handles the safe initial render before the effect runs.
                 return <MoodSelector onSelect={handleNext} />;
         }
     };
 
     return (
         <main className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 bg-background overflow-hidden">
-             <header className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
+            <header className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
                 <button
                     onClick={handleReset}
                     className="text-2xl font-bold transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background rounded-md p-1"
@@ -164,7 +207,7 @@ const App: React.FC = () => {
                 </button>
                 <LanguageSwitcher />
             </header>
-            
+
             {error && (
                 <div className="absolute top-24 bg-red-500/80 text-white p-3 rounded-lg animate-fade-in mb-4 z-20">
                     {error}

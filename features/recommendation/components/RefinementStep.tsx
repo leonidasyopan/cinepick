@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { PartialUserAnswers } from '../types';
 import { DETAILED_GENRE_REFINEMENTS } from '../constants';
@@ -15,7 +14,7 @@ interface RefinementSwitchProps {
 
 const RefinementSwitch: React.FC<RefinementSwitchProps> = ({ optionA, optionB, description, onChange, initialValueKey }) => {
     const [isBSelected, setIsBSelected] = useState(false);
-    
+
     useEffect(() => {
         onChange(initialValueKey);
     }, [initialValueKey, onChange]);
@@ -26,7 +25,7 @@ const RefinementSwitch: React.FC<RefinementSwitchProps> = ({ optionA, optionB, d
         const baseKey = optionA.substring(0, optionA.lastIndexOf('.'));
         onChange(`${baseKey}.${newValueKey}`);
     };
-    
+
     const { t } = useI18n();
     const translatedOptionA = t(optionA);
     const translatedOptionB = t(optionB);
@@ -40,7 +39,7 @@ const RefinementSwitch: React.FC<RefinementSwitchProps> = ({ optionA, optionB, d
                 </span>
                 <button
                     onClick={handleToggle}
-                    className="w-16 h-8 flex-shrink-0 bg-primary rounded-full p-1 flex items-center transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-16 h-8 flex-shrink-0 bg-surface rounded-full p-1 flex items-center transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent"
                     role="switch"
                     aria-checked={isBSelected}
                     aria-label={`Switch between ${translatedOptionA} and ${translatedOptionB}`}
@@ -65,7 +64,7 @@ interface RefinementStepProps {
 
 const RefinementStep: React.FC<RefinementStepProps> = ({ onNext, onBack, answers }) => {
     const { t } = useI18n();
-    
+
     const refinementPairs = useMemo(() => {
         if (answers.mood && answers.subMood && answers.occasion) {
             return DETAILED_GENRE_REFINEMENTS[answers.mood]?.[answers.subMood]?.[answers.occasion] || [];
@@ -95,9 +94,9 @@ const RefinementStep: React.FC<RefinementStepProps> = ({ onNext, onBack, answers
 
     if (refinementPairs.length === 0) {
         return (
-             <StepContainer title={t('refinementStep.title')} onBack={onBack}>
+            <StepContainer title={t('refinementStep.title')} onBack={onBack}>
                 <p className="text-text-secondary">{t('refinementStep.error')}</p>
-             </StepContainer>
+            </StepContainer>
         )
     }
 
@@ -105,7 +104,7 @@ const RefinementStep: React.FC<RefinementStepProps> = ({ onNext, onBack, answers
         <StepContainer title={t('refinementStep.title')} subtitle={t('refinementStep.subtitle')} onBack={onBack}>
             <div className="flex flex-col items-center gap-6 mb-8">
                 {refinementPairs.map((pair, index) => (
-                    <RefinementSwitch 
+                    <RefinementSwitch
                         key={index}
                         optionA={pair.optionA}
                         optionB={pair.optionB}
@@ -119,7 +118,7 @@ const RefinementStep: React.FC<RefinementStepProps> = ({ onNext, onBack, answers
                 <button
                     onClick={handleFindMovie}
                     disabled={selections.length !== refinementPairs.length}
-                    className="bg-accent hover:bg-primary text-text-primary font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed"
+                    className="bg-accent hover:opacity-90 text-background font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed"
                 >
                     {t('refinementStep.button')}
                 </button>
