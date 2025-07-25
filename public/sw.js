@@ -1,3 +1,4 @@
+
 const CACHE_NAME = 'cinepick-cache-v1';
 // These are the files for the app shell.
 const APP_SHELL_URLS = [
@@ -61,14 +62,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Ignore non-http/https requests to prevent errors with browser extensions.
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+
   const url = new URL(event.request.url);
 
   // For external CDNs and APIs, always use the network
-  const isExternalResource = 
+  const isExternalResource =
     url.hostname === 'cdn.tailwindcss.com' ||
     url.hostname === 'cdn.jsdelivr.net' ||
-    url.hostname === 'ipapi.co' || 
-    url.hostname === 'picsum.photos' || 
+    url.hostname === 'ipapi.co' ||
+    url.hostname === 'picsum.photos' ||
     url.hostname.endsWith('googleapis.com');
 
   if (isExternalResource) {
