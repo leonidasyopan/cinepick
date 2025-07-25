@@ -9,8 +9,9 @@ const APP_SHELL_URLS = [
   '/apple-touch-icon.png'
 ];
 
-// External resources that are part of the app shell
-const EXTERNAL_SHELL_URLS = [
+// External resources that might be used by the app
+// We'll handle these differently due to CORS restrictions
+const EXTERNAL_URLS = [
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css'
 ];
@@ -21,12 +22,15 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Service Worker: Caching App Shell');
-        const urlsToCache = [...APP_SHELL_URLS, ...EXTERNAL_SHELL_URLS];
-        return cache.addAll(urlsToCache);
+        // Only cache local resources initially
+        return cache.addAll(APP_SHELL_URLS);
       })
       .then(() => {
         // Force the waiting service worker to become the active service worker.
         return self.skipWaiting();
+      })
+      .catch(error => {
+        console.error('Service worker installation failed:', error);
       })
   );
 });
@@ -59,13 +63,20 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // For external APIs like geolocation, posters, or Gemini, always use the network.
-  if (url.hostname === 'ipapi.co' || url.hostname === 'picsum.photos' || url.hostname.endsWith('googleapis.com')) {
-    event.respondWith(fetch(event.request));
+  // For external CDNs and APIs, always use the network
+  const isExternalResource = 
+    url.hostname === 'cdn.tailwindcss.com' ||
+    url.hostname === 'cdn.jsdelivr.net' ||
+    url.hostname === 'ipapi.co' || 
+    url.hostname === 'picsum.photos' || 
+    url.hostname.endsWith('googleapis.com');
+
+  if (isExternalResource) {
+    // Don't try to handle these in the service worker
     return;
   }
 
-  // Use a "Cache, falling back to network" strategy.
+  // Use a "Cache, falling back to network" strategy for local resources
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cachedResponse) => {
@@ -76,6 +87,11 @@ self.addEventListener('fetch', (event) => {
 
         // Otherwise, fetch from the network.
         return fetch(event.request).then((networkResponse) => {
+          // Only cache successful responses
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            return networkResponse;
+          }
+
           // IMPORTANT: Clone the response. A response is a stream
           // and because we want the browser to consume the response
           // as well as the cache consuming the response, we need
@@ -87,6 +103,10 @@ self.addEventListener('fetch', (event) => {
 
           // Return the network response.
           return networkResponse;
+        }).catch(error => {
+          console.error('Fetch failed:', error);
+          // You could return a custom offline page here
+          // return cache.match('/offline.html');
         });
       });
     })
