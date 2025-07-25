@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { UserAnswers, PartialUserAnswers, MovieRecommendation } from './features/recommendation/types';
 import { getMovieRecommendation } from './features/recommendation/services/geminiService';
@@ -24,10 +25,16 @@ const HASH_STEP_MAP: { [key: string]: number } = Object.entries(STEP_HASH_MAP)
 
 const getStepFromHash = () => HASH_STEP_MAP[window.location.hash.substring(1)] || 1;
 
+// This logic runs BEFORE the first render, during component initialization.
+const initialStep = getStepFromHash();
+// On a fresh load, the application state is always empty.
+// Any step greater than 1 is therefore invalid.
+const isInitialStateSufficient = initialStep <= 1;
 
 const App: React.FC = () => {
     const { t, locale, getTranslatedAnswer } = useI18n();
-    const [step, setStep] = useState(1);
+    // Initialize step state based on the pre-render check for a safe first render.
+    const [step, setStep] = useState(isInitialStateSufficient ? initialStep : 1);
     const [answers, setAnswers] = useState<PartialUserAnswers>({});
     const [recommendation, setRecommendation] = useState<MovieRecommendation | null>(null);
     const [previousSuggestions, setPreviousSuggestions] = useState<string[]>([]);
@@ -62,6 +69,12 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        // On first mount, if the initial step was invalid, the state is already set to 1.
+        // Now, we correct the URL hash to match the state, completing the redirect.
+        if (!isInitialStateSufficient) {
+            window.location.hash = STEP_HASH_MAP[1];
+        }
+
         const handleHashChange = () => {
             if (isTransitioningRef.current) return;
 
@@ -118,7 +131,6 @@ const App: React.FC = () => {
             }, 300);
         };
 
-        handleHashChange();
         window.addEventListener('hashchange', handleHashChange);
         return () => window.removeEventListener('hashchange', handleHashChange);
     }, []); // Empty dependency array is intentional to set up a single global listener
@@ -178,6 +190,7 @@ const App: React.FC = () => {
             case 5: return <LoadingScreen />;
             case 6: return recommendation ? <RecommendationScreen recommendation={recommendation} answers={answers as UserAnswers} onTryAgain={handleTryAgain} onBack={handleBackFromRecs} /> : <LoadingScreen />;
             default:
+                // This default case handles the safe initial render before the effect runs.
                 return <MoodSelector onSelect={handleNext} />;
         }
     };
