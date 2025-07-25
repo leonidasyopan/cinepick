@@ -1,3 +1,4 @@
+
 export * from './AppleTVIcon';
 export * from './BaseStreamingIcon';
 export * from './CryIcon';
@@ -6,10 +7,12 @@ export * from './FamilyIcon';
 export * from './GenericStreamIcon';
 export * from './HeartIcon';
 export * from './HuluIcon';
+export * from './ImdbIcon';
 export * from './LaughIcon';
 export * from './MaxIcon';
 export * from './NetflixIcon';
 export * from './PrimeVideoIcon';
+export * from './RottenTomatoesIcon';
 export * from './UserIcon';
 export * from './UsersIcon';
 export * from './WonderIcon';
