@@ -1,28 +1,27 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { getAI, getGenerativeModel, GoogleAIBackend, Schema } from "firebase/ai";
 import type { TranslatedUserAnswers, MovieRecommendation } from '../types';
 
-if (!import.meta.env.VITE_GEMINI_API_KEY) {
-    throw new Error("VITE_GEMINI_API_KEY environment variable not set");
-}
+// Import the existing Firebase app instance
+import firebaseApp from '../../../firebase';
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+// Initialize Firebase AI with Gemini backend
+const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
 
-const recommendationSchema = {
-    type: Type.OBJECT,
+// Schema definition for structured response using Schema class
+const recommendationSchema = Schema.object({
     properties: {
-        title: { type: Type.STRING, description: "The title of the movie." },
-        year: { type: Type.INTEGER, description: "The release year of the movie." },
-        justification: { type: Type.STRING, description: "A compelling, personalized justification explaining why this movie fits the user's criteria. Weave the user's choices into the explanation." },
-        streamingServices: {
-            type: Type.ARRAY,
+        title: Schema.string({ description: "The title of the movie." }),
+        year: Schema.integer({ description: "The release year of the movie." }),
+        justification: Schema.string({ description: "A compelling, personalized justification explaining why this movie fits the user's criteria. Weave the user's choices into the explanation." }),
+        streamingServices: Schema.array({
             description: "A list of 2-3 major streaming services where the movie is likely available (e.g., 'Netflix', 'Hulu', 'Prime Video', 'Disney+', 'Max').",
-            items: { type: Type.STRING }
-        },
-        trailerSearchQuery: { type: Type.STRING, description: "A simple YouTube search query for the official trailer, e.g., 'Inception official trailer'." },
+            items: Schema.string()
+        }),
+        trailerSearchQuery: Schema.string({ description: "A simple YouTube search query for the official trailer, e.g., 'Inception official trailer'." }),
     },
     required: ["title", "year", "justification", "streamingServices", "trailerSearchQuery"]
-};
+});
 
 export const getMovieRecommendation = async (
     answers: TranslatedUserAnswers,
@@ -59,21 +58,27 @@ export const getMovieRecommendation = async (
     `;
 
     try {
-        const response = await ai.models.generateContent({
+        // Create a model instance with the desired model and structured output configuration
+        const model = getGenerativeModel(ai, { 
             model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: recommendationSchema,
+            generationConfig: {
                 temperature: 0.8,
-            },
+                responseMimeType: "application/json",
+                responseSchema: recommendationSchema
+            }
         });
-
-        if (!response.text) {
+        
+        // Call the model with the prompt
+        const result = await model.generateContent(prompt);
+        
+        const response = result.response;
+        
+        if (!response) {
             throw new Error("Received empty response from API");
         }
-
-        const jsonText = response.text.trim();
+        
+        // Parse the JSON from the response text
+        const jsonText = response.text();
         const parsedJson = JSON.parse(jsonText);
 
         if (!parsedJson.title || !parsedJson.justification) {
