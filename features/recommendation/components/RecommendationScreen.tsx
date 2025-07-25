@@ -1,7 +1,8 @@
 
 import React from 'react';
 import type { MovieRecommendation, UserAnswers } from '../types';
-import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon } from '../../../components/icons/index.ts';
+import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon } from '../../../components/icons/index';
+import { useI18n } from '../../../src/i18n/i18n';
 
 interface RecommendationScreenProps {
     recommendation: MovieRecommendation;
@@ -22,11 +23,11 @@ const getStreamingIcon = (service: string) => {
 };
 
 const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ text, highlights }) => {
-    if (!highlights.length) return <>{text}</>;
+    if (!highlights || !highlights.length) return <>{text}</>;
 
-    const validHighlights = highlights.filter(h => h && h.trim() !== '' && typeof h === 'string');
+    const validHighlights = highlights.filter(h => h && typeof h === 'string' && h.trim() !== '');
     if (!validHighlights.length) return <>{text}</>;
-
+    
     const escapeRegex = (str: string) => str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(`(${validHighlights.map(escapeRegex).join('|')})`, 'gi');
     const parts = text.split(regex);
@@ -45,8 +46,16 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 };
 
 export const RecommendationScreen: React.FC<RecommendationScreenProps> = ({ recommendation, answers, onTryAgain, onBack }) => {
+    const { t, getTranslatedAnswer } = useI18n();
     const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(recommendation.trailerSearchQuery)}`;
     
+    const translatedAnswers = getTranslatedAnswer(answers);
+    const highlights = [
+        translatedAnswers.subMood,
+        translatedAnswers.occasion,
+        ...translatedAnswers.refinements
+    ];
+
     return (
         <div className="w-full max-w-4xl mx-auto animate-fade-in flex flex-col lg:flex-row gap-8 items-center lg:items-start">
             <div className="flex-shrink-0 w-64 md:w-80">
@@ -58,7 +67,7 @@ export const RecommendationScreen: React.FC<RecommendationScreenProps> = ({ reco
             </div>
 
             <div className="flex-grow text-center lg:text-left">
-                <p className="text-lg text-text-secondary">Your Perfect Pick For Tonight Is:</p>
+                <p className="text-lg text-text-secondary">{t('recommendationScreen.subheading')}</p>
                 <h1 className="text-4xl md:text-6xl font-extrabold my-2 text-text-primary">
                     {recommendation.title}
                 </h1>
@@ -68,20 +77,20 @@ export const RecommendationScreen: React.FC<RecommendationScreenProps> = ({ reco
                     <p className="text-lg text-text-primary/90 leading-relaxed">
                         <HighlightedText 
                             text={recommendation.justification} 
-                            highlights={[answers.subMood, answers.occasion, ...answers.refinements]}
+                            highlights={highlights}
                         />
                     </p>
                 </div>
 
                 <div className="mb-8">
-                    <h3 className="text-xl font-bold mb-3 text-text-primary">Where to Watch</h3>
+                    <h3 className="text-xl font-bold mb-3 text-text-primary">{t('recommendationScreen.watchOn')}</h3>
                     <div className="flex items-center justify-center lg:justify-start gap-3">
                         {recommendation.streamingServices.length > 0 ? recommendation.streamingServices.map((service, index) => (
                             <div key={index} className="flex flex-col items-center gap-2">
                                 {getStreamingIcon(service)}
                                 <span className="text-xs text-text-secondary">{service}</span>
                             </div>
-                        )) : <p className="text-text-secondary">Streaming info not available.</p>}
+                        )) : <p className="text-text-secondary">{t('recommendationScreen.noStreamingInfo')}</p>}
                     </div>
                 </div>
 
@@ -92,20 +101,20 @@ export const RecommendationScreen: React.FC<RecommendationScreenProps> = ({ reco
                         rel="noopener noreferrer"
                         className="bg-primary hover:bg-accent text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105"
                     >
-                        Watch Trailer
+                        {t('recommendationScreen.trailerButton')}
                     </a>
                     <button 
                         onClick={onTryAgain}
                         className="bg-surface hover:bg-primary text-white font-bold py-3 px-8 rounded-full transition-all duration-300"
                     >
-                        Not quite? Try again!
+                        {t('recommendationScreen.tryAgainButton')}
                     </button>
                 </div>
                  <button 
                     onClick={onBack}
                     className="mt-6 text-text-secondary hover:text-text-primary transition-colors duration-300"
                 >
-                    &larr; Back
+                    &larr; {t('common.back')}
                 </button>
             </div>
         </div>

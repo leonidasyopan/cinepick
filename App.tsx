@@ -6,8 +6,10 @@ import { RecommendationScreen } from './features/recommendation/components/Recom
 import MoodSelector from './features/recommendation/components/MoodSelector';
 import SubMoodStep from './features/recommendation/components/SubMoodStep';
 import OccasionStep from './features/recommendation/components/OccasionStep';
-import GenreStep from './features/recommendation/components/GenreStep';
+import RefinementStep from './features/recommendation/components/RefinementStep';
 import LoadingScreen from './features/recommendation/components/LoadingScreen';
+import { LanguageSwitcher } from './src/components/LanguageSwitcher';
+import { useI18n } from './src/i18n/i18n';
 
 const STEP_HASH_MAP: { [key: number]: string } = {
     1: 'mood',
@@ -25,6 +27,7 @@ const getStepFromHash = () => HASH_STEP_MAP[window.location.hash.substring(1)] |
 
 
 const App: React.FC = () => {
+    const { t, locale, getTranslatedAnswer } = useI18n();
     const [step, setStep] = useState(getStepFromHash());
     const [answers, setAnswers] = useState<PartialUserAnswers>({});
     const [recommendation, setRecommendation] = useState<MovieRecommendation | null>(null);
@@ -72,8 +75,6 @@ const App: React.FC = () => {
                             return newAnswers;
                         });
                     }
-                    // This is the key fix for the race condition on "Try Again"
-                    // We don't want to nullify the recommendation if we are just starting a new search from the results page.
                     if (!(currentStep === 6 && newStep === 5) && newStep < 6) {
                         setRecommendation(null);
                     }
@@ -99,17 +100,18 @@ const App: React.FC = () => {
         window.location.hash = STEP_HASH_MAP[5];
 
         try {
-            const result = await getMovieRecommendation(currentAnswers, previousSuggestions);
+            const translatedAnswers = getTranslatedAnswer(currentAnswers);
+            const result = await getMovieRecommendation(translatedAnswers, previousSuggestions, locale);
             setRecommendation(result);
             setPreviousSuggestions(prev => [...prev, result.title]);
             window.location.hash = STEP_HASH_MAP[6];
         } catch (err: any) {
-            setError(err.message || 'An unknown error occurred.');
+            setError(err.message || t('app.errorDefault'));
             window.location.hash = STEP_HASH_MAP[1];
         } finally {
             setIsLoading(false);
         }
-    }, [previousSuggestions]);
+    }, [previousSuggestions, locale, t, getTranslatedAnswer]);
 
     const handleNext = useCallback((data: PartialUserAnswers) => {
         const newAnswers = { ...answers, ...data };
@@ -142,7 +144,7 @@ const App: React.FC = () => {
             case 1: return <MoodSelector onSelect={handleNext} />;
             case 2: return <SubMoodStep onNext={handleNext} onBack={handleBack} answers={answers} />;
             case 3: return <OccasionStep onNext={handleNext} onBack={handleBack} />;
-            case 4: return <GenreStep onNext={handleNext} onBack={handleBack} answers={answers} />;
+            case 4: return <RefinementStep onNext={handleNext} onBack={handleBack} answers={answers} />;
             case 5: return <LoadingScreen />;
             case 6: return recommendation ? <RecommendationScreen recommendation={recommendation} answers={answers as UserAnswers} onTryAgain={handleTryAgain} onBack={handleBackFromRecs} /> : <LoadingScreen />;
             default:
@@ -152,19 +154,23 @@ const App: React.FC = () => {
 
     return (
         <main className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 bg-background overflow-hidden">
-             <button
-                onClick={handleReset}
-                className="absolute top-6 left-6 text-2xl font-bold z-20 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background rounded-md p-1"
-                aria-label="Go to homepage and start over"
-            >
-                <span className="text-text-primary">Cine</span><span className="text-accent">Pick</span>
-            </button>
+             <header className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
+                <button
+                    onClick={handleReset}
+                    className="text-2xl font-bold transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background rounded-md p-1"
+                    aria-label={t('app.resetAriaLabel')}
+                >
+                    <span className="text-text-primary">{t('common.appName')}</span><span className="text-accent">{t('common.appNameAccent')}</span>
+                </button>
+                <LanguageSwitcher />
+            </header>
+            
             {error && (
-                <div className="absolute top-20 bg-red-500/80 text-white p-3 rounded-lg animate-fade-in mb-4 z-20">
+                <div className="absolute top-24 bg-red-500/80 text-white p-3 rounded-lg animate-fade-in mb-4 z-20">
                     {error}
                 </div>
             )}
-            <div className={`transition-opacity duration-300 ease-in-out w-full ${isFading ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`transition-opacity duration-300 ease-in-out w-full mt-20 sm:mt-0 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
                 {renderStep()}
             </div>
         </main>

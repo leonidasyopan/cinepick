@@ -12,6 +12,13 @@ export interface UserAnswers {
   refinements: string[];
 }
 
+export interface TranslatedUserAnswers {
+    mood: string;
+    subMood: string;
+    occasion: string;
+    refinements: string[];
+}
+
 export interface MovieRecommendation {
   title: string;
   year: number;
