@@ -24,11 +24,6 @@ export const supportedLanguages: { code: Language; name: string }[] = [
     { code: 'pt-br', name: 'Português (BR)' },
 ];
 
-const SPANISH_SPEAKING_COUNTRIES = [
-    'ES', 'MX', 'AR', 'CO', 'PE', 'VE', 'CL', 'EC', 'GT', 'CU', 'BO', 
-    'DO', 'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'PR', 'GQ'
-];
-
 interface I18nContextType {
     locale: Language;
     setLocale: (locale: Language) => void;
@@ -52,25 +47,10 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 return;
             }
 
-            // 2. Try Geolocation API for automatic detection
-            try {
-                const response = await fetch('https://ip-api.com/json/?fields=countryCode');
-                if (!response.ok) throw new Error('IP API fetch failed');
-                const data = await response.json();
-                const country: string = data.countryCode;
+            // No longer using IP API as it causes 403 errors
+            // Instead, rely primarily on browser language settings which is more reliable
+            // and respects user preferences without making external API calls
 
-                if (country === 'BR') {
-                    setLocale('pt-br');
-                    return;
-                }
-                if (SPANISH_SPEAKING_COUNTRIES.includes(country)) {
-                    setLocale('es-es');
-                    return;
-                }
-            } catch (error) {
-                console.warn('Could not detect location, falling back to browser language.', error);
-            }
-            
             // 3. Fallback to browser language if geolocation fails or doesn't match a rule
             const browserLang = navigator.language.toLowerCase();
             const matchedLocale = supportedLanguages.find(l => browserLang.startsWith(l.code.split('-')[0]));
@@ -89,14 +69,15 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => {
         const fetchTranslations = async () => {
             try {
-                const response = await fetch(`/src/i18n/locales/${locale}.json`);
+                // Updated path to use the public directory which is correctly served in both dev and production
+                const response = await fetch(`/i18n/locales/${locale}.json`);
                 if (!response.ok) {
                     throw new Error(`Failed to load translations for ${locale}`);
                 }
                 const data = await response.json();
                 setTranslations(data);
             } catch (error) {
-                console.error(error);
+                console.error('Translation loading error:', error);
                 // Fallback to English if the desired locale fails
                 if (locale !== 'en-us') {
                     setLocale('en-us');
