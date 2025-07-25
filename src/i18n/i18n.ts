@@ -92,7 +92,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => {
         const fetchTranslations = async () => {
             try {
-                const response = await fetch(`/src/i18n/locales/${locale}.json`);
+                const response = await fetch(`/i18n/locales/${locale}.json`);
                 if (!response.ok) {
                     throw new Error(`Failed to load translations for ${locale}`);
                 }
