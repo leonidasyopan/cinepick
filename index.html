@@ -12,6 +12,18 @@
   <meta name="apple-mobile-web-app-title" content="CinePick" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#161b22" />
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="CinePick: Your Perfect Movie Matchmaker">
+  <meta property="og:site_name" content="CinePick">
+  <meta property="og:description"
+    content="Tired of endless scrolling? CinePick asks a few simple questions about your mood and instantly suggests the perfect movie for you to watch tonight.">
+  <meta property="og:image" content="/cinepick-logo-full-white-background.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="500">
+  <meta property="og:image:height" content="500">
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -36,11 +48,22 @@
       -moz-osx-font-smoothing: grayscale;
     }
   </style>
+  <script>
+    // Make environment variables available to the app. This approach is used
+    // for simplicity in this client-side-only project. In a fullstack project,
+    // these would be handled by a build process or environment configuration.
+    window.process = window.process || {};
+    window.process.env = window.process.env || {};
+
+    // IMPORTANT: The key below is for The Movie Database (TMDb), NOT for Gemini.
+    // The Gemini API Key is assumed to be provided by the hosting environment.
+    window.process.env.TMDB_API_KEY = 'f178e076eefcdf17fcac104a012c34ba';
+  </script>
   <script type="importmap">
 {
   "imports": {
     "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.11.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.11.0/",
     "react/": "https://esm.sh/react@^19.1.0/",
     "react": "https://esm.sh/react@^19.1.0"
   }

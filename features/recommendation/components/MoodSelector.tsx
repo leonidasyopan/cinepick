@@ -17,7 +17,6 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSelect }) => {
         isDragging: false,
         startX: 0,
         startRotation: 0,
-        longPressTimeout: -1,
         currentRotation: -(1 / MOODS.length) * 360,
     });
 
@@ -39,36 +38,33 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSelect }) => {
             carouselRef.current.style.transition = 'none';
             carouselRef.current.style.cursor = 'grabbing';
         }
-        
+
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
         dragInfo.current.isDown = true;
+        dragInfo.current.isDragging = false; // Always reset dragging state on new press
         dragInfo.current.startX = e.clientX;
         dragInfo.current.startRotation = dragInfo.current.currentRotation;
-
-        dragInfo.current.longPressTimeout = window.setTimeout(() => {
-            dragInfo.current.isDragging = true;
-        }, 150);
     }, []);
 
     const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         if (!dragInfo.current.isDown) return;
 
         const deltaX = e.clientX - dragInfo.current.startX;
-        
+
+        // Only start dragging if pointer moves more than a threshold
         if (!dragInfo.current.isDragging && Math.abs(deltaX) > 10) {
             dragInfo.current.isDragging = true;
-            clearTimeout(dragInfo.current.longPressTimeout);
         }
-        
+
         if (dragInfo.current.isDragging) {
             const containerWidth = window.innerWidth;
-            const rotationFactor = (360 / MOODS.length) / (containerWidth / 2); 
+            const rotationFactor = (360 / MOODS.length) / (containerWidth / 2);
             const rotationOffset = deltaX * rotationFactor;
-            
+
             const newRotation = dragInfo.current.startRotation + rotationOffset;
             dragInfo.current.currentRotation = newRotation;
-            
+
             if (carouselRef.current) {
                 carouselRef.current.style.transform = `rotateY(${newRotation}deg)`;
             }
@@ -77,29 +73,28 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSelect }) => {
 
     const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-        clearTimeout(dragInfo.current.longPressTimeout);
 
         if (carouselRef.current) {
             carouselRef.current.style.cursor = 'grab';
         }
 
         if (dragInfo.current.isDragging) {
+            // If it was a drag, snap to the nearest card
             const cardAngle = 360 / MOODS.length;
             const currentRotation = dragInfo.current.currentRotation;
-            
+
             const newIndex = Math.round(-currentRotation / cardAngle);
             const clampedIndex = (newIndex % MOODS.length + MOODS.length) % MOODS.length;
 
             setActiveIndex(clampedIndex);
-
         } else {
+            // If it wasn't a drag, it's a click/tap. Select the active mood.
             onSelect({ mood: MOODS[activeIndex].id });
         }
-        
+
         dragInfo.current.isDown = false;
         dragInfo.current.isDragging = false;
-
-    }, [activeIndex, onSelect]);
+    }, [activeIndex, onSelect, setActiveIndex]);
 
     const cardAngle = 360 / MOODS.length;
     const radius = Math.min(Math.max(window.innerWidth / 4, 180), 280);

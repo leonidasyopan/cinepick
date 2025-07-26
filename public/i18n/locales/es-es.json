@@ -38,7 +38,9 @@
     "watchOn": "Dónde Ver",
     "trailerButton": "Ver Tráiler",
     "tryAgainButton": "¿No es lo que buscabas? ¡Inténtalo de nuevo!",
-    "noStreamingInfo": "Información de streaming no disponible."
+    "noStreamingInfo": "Información de streaming no disponible.",
+    "justificationHeader": "Por Qué Es Tu Elección Perfecta",
+    "moreDetails": "Más Detalles"
   },
   "timeOfDay": {
     "morning": "esta mañana",

@@ -10,13 +10,6 @@ const APP_SHELL_URLS = [
   '/apple-touch-icon.png'
 ];
 
-// External resources that might be used by the app
-// We'll handle these differently due to CORS restrictions
-const EXTERNAL_URLS = [
-  'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css'
-];
-
 // Install the service worker and cache the app shell.
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -69,16 +62,18 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // For external CDNs and APIs, always use the network
+  // For external CDNs and APIs, always use the network and do not cache.
   const isExternalResource =
     url.hostname === 'cdn.tailwindcss.com' ||
     url.hostname === 'cdn.jsdelivr.net' ||
     url.hostname === 'ipapi.co' ||
     url.hostname === 'picsum.photos' ||
+    url.hostname === 'api.themoviedb.org' ||
+    url.hostname === 'image.tmdb.org' ||
     url.hostname.endsWith('googleapis.com');
 
   if (isExternalResource) {
-    // Don't try to handle these in the service worker
+    // Let the network handle it, do not intercept.
     return;
   }
 
@@ -93,7 +88,7 @@ self.addEventListener('fetch', (event) => {
 
         // Otherwise, fetch from the network.
         return fetch(event.request).then((networkResponse) => {
-          // Only cache successful responses
+          // Only cache successful responses for the app shell itself
           if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
             return networkResponse;
           }
@@ -112,7 +107,7 @@ self.addEventListener('fetch', (event) => {
         }).catch(error => {
           console.error('Fetch failed:', error);
           // You could return a custom offline page here
-          // return cache.match('/offline.html');
+          // For example: return caches.match('/offline.html');
         });
       });
     })

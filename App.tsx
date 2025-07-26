@@ -52,6 +52,7 @@ const App: React.FC = () => {
     const stepRef = useRef(step);
     stepRef.current = step;
     const isTransitioningRef = useRef(false);
+    const isProgrammaticNavigationRef = useRef(false);
 
 
     const handleReset = useCallback(() => {
@@ -63,6 +64,7 @@ const App: React.FC = () => {
             setPreviousSuggestions([]);
             setError(null);
             setIsLoading(false);
+            isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[1];
             setIsFading(false);
         }, 300);
@@ -72,37 +74,42 @@ const App: React.FC = () => {
         // On first mount, if the initial step was invalid, the state is already set to 1.
         // Now, we correct the URL hash to match the state, completing the redirect.
         if (!isInitialStateSufficient) {
+            isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[1];
         }
 
         const handleHashChange = () => {
+            const wasProgrammatic = isProgrammaticNavigationRef.current;
+            isProgrammaticNavigationRef.current = false; // Reset the flag immediately after reading it.
+
             if (isTransitioningRef.current) return;
 
             const newStep = getStepFromHash();
             const currentStep = stepRef.current;
 
-            const isStateSufficientForStep = (targetStep: number) => {
-                const currentAnswers = answersRef.current;
-                const currentRecommendation = recommendationRef.current;
-                const currentIsLoading = isLoadingRef.current;
+            // Only perform state validation for EXTERNAL navigation (back/forward button, manual URL entry)
+            if (!wasProgrammatic) {
+                const isStateSufficientForStep = (targetStep: number) => {
+                    const currentAnswers = answersRef.current;
+                    const currentRecommendation = recommendationRef.current;
+                    const currentIsLoading = isLoadingRef.current;
 
-                if (targetStep <= 1) return true;
-                if (targetStep === 2) return !!currentAnswers.mood;
-                if (targetStep === 3) return !!currentAnswers.mood && !!currentAnswers.subMood;
-                if (targetStep === 4) return !!currentAnswers.mood && !!currentAnswers.subMood && !!currentAnswers.occasion;
-                if (targetStep === 5) return currentIsLoading;
-                if (targetStep === 6) return !!currentRecommendation;
+                    if (targetStep <= 1) return true;
+                    if (targetStep === 2) return !!currentAnswers.mood;
+                    if (targetStep === 3) return !!currentAnswers.mood && !!currentAnswers.subMood;
+                    if (targetStep === 4) return !!currentAnswers.mood && !!currentAnswers.subMood && !!currentAnswers.occasion;
+                    if (targetStep === 5) return currentIsLoading;
+                    if (targetStep === 6) return !!currentRecommendation;
 
-                return false;
-            };
+                    return false;
+                };
 
-            if (!isStateSufficientForStep(newStep)) {
-                if (window.location.hash !== `#${STEP_HASH_MAP[1]}`) {
+                if (!isStateSufficientForStep(newStep)) {
+                    // This is external navigation to an invalid state. Redirect to the start.
+                    // This hash change will trigger the event listener again, which is fine.
                     window.location.hash = STEP_HASH_MAP[1];
-                } else if (currentStep !== 1) {
-                    setStep(1);
+                    return; // Stop processing this event; the new one for #mood will take over.
                 }
-                return;
             }
 
             if (newStep === currentStep) return;
@@ -139,6 +146,7 @@ const App: React.FC = () => {
     const fetchRecommendation = useCallback(async (currentAnswers: UserAnswers) => {
         setIsLoading(true);
         setError(null);
+        isProgrammaticNavigationRef.current = true;
         window.location.hash = STEP_HASH_MAP[5];
 
         try {
@@ -146,9 +154,11 @@ const App: React.FC = () => {
             const result = await getMovieRecommendation(translatedAnswers, previousSuggestions, locale);
             setRecommendation(result);
             setPreviousSuggestions(prev => [...prev, result.title]);
+            isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[6];
         } catch (err: any) {
             setError(err.message || t('app.errorDefault'));
+            isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[1];
         } finally {
             setIsLoading(false);
@@ -163,6 +173,7 @@ const App: React.FC = () => {
         if (nextStep > 4) {
             fetchRecommendation(newAnswers as UserAnswers);
         } else {
+            isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[nextStep];
         }
     }, [answers, step, fetchRecommendation]);
@@ -172,6 +183,7 @@ const App: React.FC = () => {
     };
 
     const handleBackFromRecs = () => {
+        isProgrammaticNavigationRef.current = true;
         window.location.hash = STEP_HASH_MAP[4];
     };
 
