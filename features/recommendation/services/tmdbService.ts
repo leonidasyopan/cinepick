@@ -176,6 +176,7 @@ const getWatchProviders = async (movieId: number, locale: string): Promise<Watch
   }
 };
 
+// This function only fetches basic movie details without providers (for faster initial load)
 export const fetchMovieDetailsFromTMDb = async (title: string, year: number, locale: string): Promise<Partial<MovieRecommendation>> => {
   const movieId = await searchMovie(title, year, locale);
   if (!movieId) {
@@ -183,30 +184,46 @@ export const fetchMovieDetailsFromTMDb = async (title: string, year: number, loc
     return {};
   }
 
-  const [details, providers] = await Promise.all([
-    getMovieDetails(movieId, locale),
-    getWatchProviders(movieId, locale)
-  ]);
-  
-  // Enhance providers with direct streaming URLs
-  const enhancedProviders = providers.map(provider => {
-    const directUrl = generateStreamingUrl(
-      provider,
-      title,
-      year,
-      details.imdbId,
-      movieId
-    );
-    
-    return {
-      ...provider,
-      directUrl: directUrl
-    };
-  });
+  // Only fetch core details, no providers
+  const details = await getMovieDetails(movieId, locale);
 
   return {
     ...details,
-    watchProviders: enhancedProviders,
     tmdbId: movieId
   };
+};
+
+// Separate function to fetch streaming providers asynchronously
+export const fetchStreamingProviders = async (
+  movieId: number, 
+  title: string,
+  year: number,
+  locale: string,
+  imdbId?: string
+): Promise<WatchProvider[]> => {
+  try {
+    // Fetch providers
+    const providers = await getWatchProviders(movieId, locale);
+    
+    // Enhance providers with direct streaming URLs
+    const enhancedProviders = providers.map(provider => {
+      const directUrl = generateStreamingUrl(
+        provider,
+        title,
+        year,
+        imdbId,
+        movieId
+      );
+      
+      return {
+        ...provider,
+        directUrl: directUrl
+      };
+    });
+
+    return enhancedProviders;
+  } catch (error) {
+    console.error("Error fetching streaming providers:", error);
+    return [];
+  }
 };

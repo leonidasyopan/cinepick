@@ -1,20 +1,12 @@
 
 import React from 'react';
-import type { MovieRecommendation, UserAnswers, WatchProvider } from '../types';
+import type { MovieRecommendation, UserAnswers } from '../types';
 import { IMAGE_BASE_URL } from '../services/tmdbService';
-import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon, ImdbIcon, RottenTomatoesIcon } from '../../../components/icons/index';
+import { ImdbIcon, RottenTomatoesIcon } from '../../../components/icons/index';
 import { useI18n } from '../../../src/i18n/i18n';
+import { StreamingProviders } from './StreamingProviders';
 
-const getStreamingIcon = (serviceName: string) => {
-    const s = serviceName.toLowerCase();
-    if (s.includes('netflix')) return <NetflixIcon />;
-    if (s.includes('hulu')) return <HuluIcon />;
-    if (s.includes('prime video') || s.includes('amazon')) return <PrimeVideoIcon />;
-    if (s.includes('disney+')) return <DisneyPlusIcon />;
-    if (s.includes('max')) return <MaxIcon />;
-    if (s.includes('apple tv')) return <AppleTVIcon />;
-    return <GenericStreamIcon />;
-};
+// Streaming icons are now handled by the StreamingProviders component
 
 const formatRuntime = (minutes: number | undefined): string => {
     if (!minutes) return '';
@@ -60,8 +52,6 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
         ...translatedAnswers.refinements
     ];
 
-    const watchProviders = recommendation.watchProviders?.filter(p => p.logo_path) || [];
-
     const posterUrl = recommendation.posterPath
         ? `${IMAGE_BASE_URL}w500${recommendation.posterPath}`
         : `https://picsum.photos/seed/${encodeURIComponent(recommendation.title)}/500/750`;
@@ -105,34 +95,16 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                     </p>
                 </div>
 
-                {/* Watch On */}
-                <div className="mb-6">
-                    <h3 className="text-lg font-bold mb-3 text-text-primary">{t('recommendationScreen.watchOn')}</h3>
-                    <div className="flex items-center justify-center lg:justify-start gap-3">
-                        {watchProviders.length > 0 ? watchProviders.slice(0, 5).map((provider) => (
-                            <a 
-                                href={provider.directUrl || provider.link} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                key={provider.provider_id} 
-                                className="flex flex-col items-center gap-1 group"
-                                title={`Watch on ${provider.provider_name}`}
-                            >
-                                <img 
-                                    src={`${IMAGE_BASE_URL}w92${provider.logo_path}`} 
-                                    alt={provider.provider_name} 
-                                    className="w-10 h-10 rounded-md transition-transform group-hover:scale-110" 
-                                />
-                                <span className="text-xs text-text-secondary">{provider.provider_name}</span>
-                            </a>
-                        )) : (recommendation.streamingServices && recommendation.streamingServices.length > 0) ? recommendation.streamingServices.map((service, index) => (
-                            <div key={index} className="flex flex-col items-center gap-2">
-                                {getStreamingIcon(service)}
-                                <span className="text-xs text-text-secondary">{service}</span>
-                            </div>
-                        )) : <p className="text-text-secondary">{t('recommendationScreen.noStreamingInfo')}</p>}
-                    </div>
-                </div>
+                {/* Watch On - Async Loading Component */}
+                <StreamingProviders 
+                    watchProviders={recommendation.watchProviders}
+                    streamingServices={recommendation.streamingServices}
+                    title={recommendation.title}
+                    year={recommendation.year}
+                    imdbId={recommendation.imdbId}
+                    tmdbId={recommendation.tmdbId}
+                    className="mb-6"
+                />
 
                 {/* More Details Links */}
                 <div className="mb-8">
