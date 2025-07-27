@@ -5,8 +5,7 @@ import type { TranslatedUserAnswers, MovieRecommendation, UserPreferences } from
 // Import the existing Firebase app instance
 import firebaseApp from '../../../firebase';
 
-// Import TMDb service for movie details enrichment
-import { fetchMovieDetailsFromTMDb } from './tmdbService';
+// TMDb details are now fetched directly in the UI components
 
 // Initialize Firebase AI with Gemini backend, with error handling for potential issues
 let ai;
@@ -112,22 +111,19 @@ export const getMovieRecommendation = async (
             throw new Error("Received incomplete data from API.");
         }
         
-        // Now, enrich the recommendation with data from TMDb
-        const tmdbDetails = await fetchMovieDetailsFromTMDb(geminiRecommendation.title, geminiRecommendation.year, locale);
-        
-        // Combine Gemini's creative output with TMDb's factual data
-        const fullRecommendation: MovieRecommendation = {
+        // Return the AI-generated recommendation immediately for faster UI rendering
+        // We'll fetch TMDB details separately in the UI components
+        return {
             ...geminiRecommendation,
-            ...tmdbDetails,
+            // Include empty fields that will be populated later
+            tmdbId: undefined,
+            imdbId: undefined,
+            posterPath: undefined,
+            watchProviders: []  // Empty array, will be loaded asynchronously
         };
         
-        // If TMDb providers are available, they are preferred.
-        // Otherwise, we keep Gemini's fallback list.
-        if (tmdbDetails.watchProviders && tmdbDetails.watchProviders.length > 0) {
-            delete fullRecommendation.streamingServices;
-        }
-
-        return fullRecommendation;
+        // Note: We've removed the TMDB call here to speed up initial rendering
+        // The UI will now be responsible for fetching additional details
 
     } catch (error) {
         console.error("Error fetching movie recommendation:", error);

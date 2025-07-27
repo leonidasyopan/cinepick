@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { MovieRecommendation, UserAnswers } from '../types';
-import { IMAGE_BASE_URL } from '../services/tmdbService';
+import { IMAGE_BASE_URL, fetchMovieDetailsFromTMDb } from '../services/tmdbService';
 import { ImdbIcon, RottenTomatoesIcon } from '../../../components/icons/index';
 import { useI18n } from '../../../src/i18n/i18n';
 import { StreamingProviders } from './StreamingProviders';
@@ -39,8 +39,42 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 };
 
 
-export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendation; answers: UserAnswers; onTryAgain: () => void; onBack: () => void; }> = ({ recommendation, answers, onTryAgain, onBack }) => {
+export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendation; answers: UserAnswers; onTryAgain: () => void; onBack: () => void; }> = ({ recommendation: initialRecommendation, answers, onTryAgain, onBack }) => {
     const { t, getTranslatedAnswer } = useI18n();
+    const [recommendation, setRecommendation] = useState(initialRecommendation);
+    const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+    
+    // Asynchronously fetch and enhance recommendation with TMDB details
+    useEffect(() => {
+        const enhanceRecommendation = async () => {
+            try {
+                // Fetch movie details from TMDB in the background
+                const tmdbDetails = await fetchMovieDetailsFromTMDb(
+                    recommendation.title,
+                    recommendation.year,
+                    'en-US' // Could be made configurable
+                );
+                
+                // Merge the details with our existing recommendation
+                setRecommendation(prev => ({
+                    ...prev,
+                    ...tmdbDetails,
+                    // If we got new providers from TMDB, prefer those over AI-generated ones
+                    streamingServices: tmdbDetails.watchProviders && tmdbDetails.watchProviders.length > 0 
+                        ? undefined 
+                        : prev.streamingServices
+                }));
+            } catch (error) {
+                console.error('Error enhancing recommendation with TMDB details:', error);
+                // Continue showing the recommendation with minimal data
+            } finally {
+                setIsLoadingDetails(false);
+            }
+        };
+        
+        enhanceRecommendation();
+    }, [initialRecommendation.title, initialRecommendation.year]);
+
     const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(recommendation.trailerSearchQuery)}`;
     const imdbUrl = recommendation.imdbId ? `https://www.imdb.com/title/${recommendation.imdbId}/` : null;
     const rtUrl = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(recommendation.title)}`;
@@ -52,6 +86,7 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
         ...translatedAnswers.refinements
     ];
 
+    // Use a placeholder image while loading, or fallback if no poster path
     const posterUrl = recommendation.posterPath
         ? `${IMAGE_BASE_URL}w500${recommendation.posterPath}`
         : `https://picsum.photos/seed/${encodeURIComponent(recommendation.title)}/500/750`;
@@ -75,14 +110,36 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
 
                 {/* Details Panel */}
                 <div className="flex items-center justify-center lg:justify-start gap-x-3 text-text-secondary text-sm mb-4">
-                    {recommendation.runtime && <span>{formatRuntime(recommendation.runtime)}</span>}
-                    {recommendation.rating && <span className="flex items-center gap-1"> • <span className="font-bold text-accent">{recommendation.rating.score.toFixed(1)}</span> {recommendation.rating.source}</span>}
-                    {recommendation.director && <span> • {recommendation.director}</span>}
+                    {isLoadingDetails ? (
+                        <div className="flex gap-3">
+                            <div className="w-16 h-4 bg-surface/50 rounded animate-pulse"></div>
+                            <div className="w-24 h-4 bg-surface/50 rounded animate-pulse"></div>
+                            <div className="w-20 h-4 bg-surface/50 rounded animate-pulse"></div>
+                        </div>
+                    ) : (
+                        <>
+                            {recommendation.runtime && <span>{formatRuntime(recommendation.runtime)}</span>}
+                            {recommendation.rating && <span className="flex items-center gap-1"> • <span className="font-bold text-accent">{recommendation.rating.score.toFixed(1)}</span> {recommendation.rating.source}</span>}
+                            {recommendation.director && <span> • {recommendation.director}</span>}
+                        </>
+                    )}
                 </div>
 
-                {recommendation.synopsis && <p className="text-sm text-text-secondary mb-4 italic">{recommendation.synopsis}</p>}
+                {isLoadingDetails && !recommendation.synopsis ? (
+                    <div className="mb-4">
+                        <div className="w-full h-16 bg-surface/50 rounded animate-pulse"></div>
+                    </div>
+                ) : recommendation.synopsis ? (
+                    <p className="text-sm text-text-secondary mb-4 italic">{recommendation.synopsis}</p>
+                ) : null}
 
-                {recommendation.cast && <p className="text-xs text-text-secondary mb-6">Starring: {recommendation.cast.join(', ')}</p>}
+                {isLoadingDetails && !recommendation.cast ? (
+                    <div className="mb-6">
+                        <div className="w-3/4 h-3 bg-surface/50 rounded animate-pulse"></div>
+                    </div>
+                ) : recommendation.cast ? (
+                    <p className="text-xs text-text-secondary mb-6">Starring: {recommendation.cast.join(', ')}</p>
+                ) : null}
 
                 {/* Justification */}
                 <div className="bg-surface/50 p-4 rounded-lg mb-6">
