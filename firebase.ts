@@ -29,18 +29,20 @@ const areFirebaseKeysProvided =
   firebaseConfig.projectId &&
   firebaseConfig.appId;
 
-// Conditionally initialize Analytics.
-// This is just to enable analytics tracking. The instance is not used in the app yet.
-isSupported().then(supported => {
-  if (supported) {
-    getAnalytics(app);
-  }
-});
-
 // Initialize Firebase only if the app hasn't been initialized yet and keys are provided
 const app = areFirebaseKeysProvided && !getApps().length
   ? initializeApp(firebaseConfig)
   : (getApps()[0] || null);
+
+// Conditionally initialize Analytics.
+// This is just to enable analytics tracking. The instance is not used in the app yet.
+if (app) {
+  isSupported().then(supported => {
+    if (supported) {
+      getAnalytics(app);
+    }
+  });
+}
 
 // Conditionally export auth and db so the app can run without Firebase for unauthenticated users
 export const auth = app ? getAuth(app) : null;
