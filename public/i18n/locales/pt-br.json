@@ -29,6 +29,8 @@
     "ageRating": "Classificação etária máxima",
     "save": "Salvar Preferências",
     "loggedInAs": "Logado como {email}",
+    "signInWithGoogle": "Entrar com Google",
+    "orSeparator": "OU",
     "ratings": {
       "any": "Qualquer"
     },

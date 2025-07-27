@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
-import { onAuthStateChanged, User, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth, isFirebaseEnabled } from '../../firebase';
+import { onAuthStateChanged, User, signOut as firebaseSignOut, signInWithPopup } from 'firebase/auth';
+import { auth, isFirebaseEnabled, googleProvider } from '../../firebase';
 import { getUserPreferences, updateUserPreferences as setFirestorePreferences } from './services/firestoreService';
 import type { UserPreferences } from '../recommendation/types';
 
@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   preferences: Partial<UserPreferences>;
   updateUserPreferences: (prefs: Partial<UserPreferences>) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   isFirebaseEnabled: boolean;
 }
@@ -51,13 +52,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
+  const signInWithGoogle = async () => {
+    if (!auth || !googleProvider) {
+      throw new Error("Firebase not configured for Google Sign-In.");
+    }
+    await signInWithPopup(auth, googleProvider);
+  };
+
   const logout = async () => {
     if (auth) {
       await firebaseSignOut(auth);
     }
   };
 
-  const value = { user, loading, preferences, updateUserPreferences, logout, isFirebaseEnabled };
+  const value = { user, loading, preferences, updateUserPreferences, signInWithGoogle, logout, isFirebaseEnabled };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

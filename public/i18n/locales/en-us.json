@@ -29,6 +29,8 @@
     "ageRating": "Maximum age rating",
     "save": "Save Preferences",
     "loggedInAs": "Logged in as {email}",
+    "signInWithGoogle": "Sign in with Google",
+    "orSeparator": "OR",
     "ratings": {
       "any": "Any"
     },

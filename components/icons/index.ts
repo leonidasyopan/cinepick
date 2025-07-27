@@ -5,6 +5,7 @@ export * from './CryIcon';
 export * from './DisneyPlusIcon';
 export * from './FamilyIcon';
 export * from './GenericStreamIcon';
+export * from './GoogleIcon';
 export * from './HeartIcon';
 export * from './HuluIcon';
 export * from './ImdbIcon';

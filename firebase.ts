@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAnalytics, isSupported } from "firebase/analytics";
-import { getAuth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Add additional error logging to help diagnose deployment issues
@@ -47,6 +47,7 @@ if (app) {
 // Conditionally export auth and db so the app can run without Firebase for unauthenticated users
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
+export const googleProvider = app ? new GoogleAuthProvider() : null;
 
 // Export a flag to check if Firebase is available
 export const isFirebaseEnabled = !!app;

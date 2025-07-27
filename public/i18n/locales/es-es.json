@@ -29,6 +29,8 @@
     "ageRating": "Calificación de edad máxima",
     "save": "Guardar Preferencias",
     "loggedInAs": "Sesión iniciada como {email}",
+    "signInWithGoogle": "Iniciar sesión con Google",
+    "orSeparator": "O",
     "ratings": {
       "any": "Cualquiera"
     },
@@ -169,7 +171,7 @@
         },
         "family": {
           "0": { "optionA": "Caos Animado", "optionB": "Cuento Familiar Clásico y Tranquilo", "description": "Sobrecarga de alta energía vs. narrativa suave." },
-          "1": { "optionA": "Comedia de Aventura Fantástica", "optionB": "Animación Conmovedora", "description": "Construcción de mundos ridículos vs. conexión emocional." },
+          "1": { "optionA": "Comedia de Aventura Fantástica", "optionB": "Animación Conmovedora", "description": "Construcción de mundos ridículos vs. conexão emocional." },
           "2": { "optionA": "Comedia de Animales que Hablan", "optionB": "Película Familiar Costumbrista", "description": "Travesuras salvajes vs. magia ordinaria." }
         }
       }
