@@ -14,9 +14,36 @@
     "errorDefault": "Ocorreu um erro desconhecido.",
     "errorFetchingRecommendation": "Desculpe, não consegui pensar em um filme agora. Por favor, tente novamente."
   },
+  "auth": {
+    "login": "Login",
+    "signup": "Cadastre-se",
+    "logout": "Sair",
+    "email": "E-mail",
+    "password": "Senha",
+    "createAccount": "Criar Conta",
+    "noAccount": "Não tem uma conta? Cadastre-se",
+    "hasAccount": "Já tem uma conta? Faça login",
+    "profileTitle": "Seu Perfil",
+    "preferencesTitle": "Suas Preferências de Recomendação",
+    "startYear": "Recomendar filmes a partir deste ano",
+    "ageRating": "Classificação etária máxima",
+    "save": "Salvar Preferências",
+    "loggedInAs": "Logado como {email}",
+    "signInWithGoogle": "Entrar com Google",
+    "orSeparator": "OU",
+    "ratings": {
+      "any": "Qualquer"
+    },
+    "error": {
+      "emailInUse": "Este e-mail já está em uso.",
+      "weakPassword": "A senha deve ter pelo menos 6 caracteres.",
+      "invalidCredential": "E-mail ou senha inválidos.",
+      "generic": "Ocorreu um erro. Por favor, tente novamente."
+    }
+  },
   "moodSelector": {
-    "title": "Qual o clima para o filme {timeOfDay}?",
-    "subtitle": "Escolha um dos sentimentos para começar."
+    "title": "Como você está se sentindo {timeOfDay}?",
+    "subtitle": "Toque em um humor para selecionar, ou arraste para girar."
   },
   "subMoodStep": {
     "title": "Que tipo de \"{mood}\"?"

@@ -14,6 +14,33 @@
     "errorDefault": "Ocurrió un error desconocido.",
     "errorFetchingRecommendation": "Lo siento, no pude encontrar una película en este momento. Por favor, inténtalo de nuevo."
   },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "signup": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "createAccount": "Crear Cuenta",
+    "noAccount": "¿No tienes cuenta? Regístrate",
+    "hasAccount": "¿Ya tienes cuenta? Inicia sesión",
+    "profileTitle": "Tu Perfil",
+    "preferencesTitle": "Tus Preferencias de Recomendación",
+    "startYear": "Recomendar películas desde este año en adelante",
+    "ageRating": "Calificación de edad máxima",
+    "save": "Guardar Preferencias",
+    "loggedInAs": "Sesión iniciada como {email}",
+    "signInWithGoogle": "Iniciar sesión con Google",
+    "orSeparator": "O",
+    "ratings": {
+      "any": "Cualquiera"
+    },
+    "error": {
+      "emailInUse": "Este correo electrónico ya está en uso.",
+      "weakPassword": "La contraseña debe tener al menos 6 caracteres.",
+      "invalidCredential": "Correo electrónico o contraseña no válidos.",
+      "generic": "Ocurrió un error. Por favor, inténtalo de nuevo."
+    }
+  },
   "moodSelector": {
     "title": "¿Cómo te sientes {timeOfDay}?",
     "subtitle": "Toca un estado de ánimo para seleccionar, o arrastra para girar."
@@ -144,7 +171,7 @@
         },
         "family": {
           "0": { "optionA": "Caos Animado", "optionB": "Cuento Familiar Clásico y Tranquilo", "description": "Sobrecarga de alta energía vs. narrativa suave." },
-          "1": { "optionA": "Comedia de Aventura Fantástica", "optionB": "Animación Conmovedora", "description": "Construcción de mundos ridículos vs. conexión emocional." },
+          "1": { "optionA": "Comedia de Aventura Fantástica", "optionB": "Animación Conmovedora", "description": "Construcción de mundos ridículos vs. conexão emocional." },
           "2": { "optionA": "Comedia de Animales que Hablan", "optionB": "Película Familiar Costumbrista", "description": "Travesuras salvajes vs. magia ordinaria." }
         }
       }
@@ -212,7 +239,7 @@
         },
         "family": {
           "0": { "optionA": "Historia de Trauma Generacional", "optionB": "Pieza de Memoria Cultural", "description": "Dolor heredado vs. reflexión coletiva." },
-          "1": { "optionA": "Coming-of-Age en Tiempos Difíciles", "optionB": "Drama Similar a una Fábula", "description": "Verdad dura vs. tristeza mágica." },
+          "1": { "optionA": "Coming-of-Age en Tiempos Difíceis", "optionB": "Drama Similar a una Fábula", "description": "Verdad dura vs. tristeza mágica." },
           "2": { "optionA": "Colapso Familiar Histórico", "optionB": "Drama de Reconciliación", "description": "Pérdida vs. reparación." }
         }
       }
