@@ -1,5 +1,6 @@
 
 import type { MovieRecommendation, WatchProvider } from '../types';
+import { generateStreamingUrl } from '../utils/streamingUrlMappings';
 
 // Check for both API key and access token
 if (!import.meta.env.VITE_TMDB_API_KEY) {
@@ -150,9 +151,23 @@ const getWatchProviders = async (movieId: number, locale: string): Promise<Watch
     const countryProviders = data.results[countryCode];
     if (!countryProviders || !countryProviders.flatrate) return [];
 
+    // Get additional movie details for external IDs, which will help with direct links
+    const movieDetailsUrl = new URL(`${BASE_URL}/movie/${movieId}`);
+    movieDetailsUrl.searchParams.append('append_to_response', 'external_ids');
+    
+    const detailsResponse = await fetch(movieDetailsUrl.toString(), options);
+    let imdbId = null;
+    
+    if (detailsResponse.ok) {
+      const movieDetails = await detailsResponse.json();
+      imdbId = movieDetails.external_ids?.imdb_id;
+    }
+
     return countryProviders.flatrate.map(p => ({
       ...p,
-      link: countryProviders.link
+      link: countryProviders.link,
+      tmdb_id: movieId,
+      imdb_id: imdbId
     }));
 
   } catch (error) {
@@ -172,9 +187,26 @@ export const fetchMovieDetailsFromTMDb = async (title: string, year: number, loc
     getMovieDetails(movieId, locale),
     getWatchProviders(movieId, locale)
   ]);
+  
+  // Enhance providers with direct streaming URLs
+  const enhancedProviders = providers.map(provider => {
+    const directUrl = generateStreamingUrl(
+      provider,
+      title,
+      year,
+      details.imdbId,
+      movieId
+    );
+    
+    return {
+      ...provider,
+      directUrl: directUrl
+    };
+  });
 
   return {
     ...details,
-    watchProviders: providers
+    watchProviders: enhancedProviders,
+    tmdbId: movieId
   };
 };

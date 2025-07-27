@@ -110,8 +110,19 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                     <h3 className="text-lg font-bold mb-3 text-text-primary">{t('recommendationScreen.watchOn')}</h3>
                     <div className="flex items-center justify-center lg:justify-start gap-3">
                         {watchProviders.length > 0 ? watchProviders.slice(0, 5).map((provider) => (
-                            <a href={provider.link} target="_blank" rel="noopener noreferrer" key={provider.provider_id} className="flex flex-col items-center gap-1 group">
-                                <img src={`${IMAGE_BASE_URL}w92${provider.logo_path}`} alt={provider.provider_name} className="w-10 h-10 rounded-md transition-transform group-hover:scale-110" />
+                            <a 
+                                href={provider.directUrl || provider.link} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                key={provider.provider_id} 
+                                className="flex flex-col items-center gap-1 group"
+                                title={`Watch on ${provider.provider_name}`}
+                            >
+                                <img 
+                                    src={`${IMAGE_BASE_URL}w92${provider.logo_path}`} 
+                                    alt={provider.provider_name} 
+                                    className="w-10 h-10 rounded-md transition-transform group-hover:scale-110" 
+                                />
                                 <span className="text-xs text-text-secondary">{provider.provider_name}</span>
                             </a>
                         )) : (recommendation.streamingServices && recommendation.streamingServices.length > 0) ? recommendation.streamingServices.map((service, index) => (

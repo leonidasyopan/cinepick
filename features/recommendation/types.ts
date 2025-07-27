@@ -23,6 +23,9 @@ export interface WatchProvider {
   provider_name: string;
   logo_path: string;
   link: string;
+  directUrl?: string;
+  imdb_id?: string;
+  tmdb_id?: number;
 }
 export interface MovieRecommendation {
   title: string;
@@ -40,6 +43,7 @@ export interface MovieRecommendation {
   cast?: string[];
   director?: string;
   imdbId?: string;
+  tmdbId?: number; // TMDB's ID for the movie
   watchProviders?: WatchProvider[];
   // Fallback for original streaming services list
   streamingServices?: string[];
