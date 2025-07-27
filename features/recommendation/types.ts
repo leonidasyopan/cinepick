@@ -1,5 +1,3 @@
-
-
 export interface RefinementPair {
   optionA: string;
   optionB: string;
@@ -48,3 +46,8 @@ export interface MovieRecommendation {
 }
 
 export type PartialUserAnswers = Partial<UserAnswers>;
+
+export interface UserPreferences {
+  startYear: number;
+  ageRating: 'Any' | 'G' | 'PG' | 'PG-13' | 'R' | 'NC-17';
+}

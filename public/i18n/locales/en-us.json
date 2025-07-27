@@ -14,6 +14,31 @@
     "errorDefault": "An unknown error occurred.",
     "errorFetchingRecommendation": "Sorry, I couldn't think of a movie right now. Please try again."
   },
+  "auth": {
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "createAccount": "Create Account",
+    "noAccount": "Don't have an account? Sign Up",
+    "hasAccount": "Already have an account? Login",
+    "profileTitle": "Your Profile",
+    "preferencesTitle": "Your Recommendation Preferences",
+    "startYear": "Recommend movies from this year onwards",
+    "ageRating": "Maximum age rating",
+    "save": "Save Preferences",
+    "loggedInAs": "Logged in as {email}",
+    "ratings": {
+      "any": "Any"
+    },
+    "error": {
+      "emailInUse": "This email is already in use.",
+      "weakPassword": "Password should be at least 6 characters.",
+      "invalidCredential": "Invalid email or password.",
+      "generic": "An error occurred. Please try again."
+    }
+  },
   "moodSelector": {
     "title": "How are you feeling {timeOfDay}?",
     "subtitle": "Tap a mood to select, or drag to spin."

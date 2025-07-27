@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { UserAnswers, PartialUserAnswers, MovieRecommendation } from './features/recommendation/types';
+import { UserAnswers, PartialUserAnswers, MovieRecommendation, UserPreferences } from './features/recommendation/types';
 import { getMovieRecommendation } from './features/recommendation/services/geminiService';
 import { RecommendationScreen } from './features/recommendation/components/RecommendationScreen';
 import MoodSelector from './features/recommendation/components/MoodSelector';
@@ -10,6 +10,10 @@ import RefinementStep from './features/recommendation/components/RefinementStep'
 import LoadingScreen from './features/recommendation/components/LoadingScreen';
 import { LanguageSwitcher } from './src/components/LanguageSwitcher';
 import { useI18n } from './src/i18n/i18n';
+import { useAuth } from './features/auth/AuthContext';
+import AuthModal from './features/auth/components/AuthModal';
+import ProfileModal from './features/auth/components/ProfileModal';
+import { UserIcon } from './components/icons';
 
 const STEP_HASH_MAP: { [key: number]: string } = {
     1: 'mood',
@@ -33,7 +37,8 @@ const isInitialStateSufficient = initialStep <= 1;
 
 const App: React.FC = () => {
     const { t, locale, getTranslatedAnswer } = useI18n();
-    // Initialize step state based on the pre-render check for a safe first render.
+    const { user, loading: authLoading, preferences, isFirebaseEnabled } = useAuth();
+
     const [step, setStep] = useState(isInitialStateSufficient ? initialStep : 1);
     const [answers, setAnswers] = useState<PartialUserAnswers>({});
     const [recommendation, setRecommendation] = useState<MovieRecommendation | null>(null);
@@ -41,8 +46,9 @@ const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isFading, setIsFading] = useState(false);
+    const [isAuthModalOpen, setAuthModalOpen] = useState(false);
+    const [isProfileModalOpen, setProfileModalOpen] = useState(false);
 
-    // Refs to hold current state for access inside useEffect without dependencies
     const answersRef = useRef(answers);
     answersRef.current = answers;
     const recommendationRef = useRef(recommendation);
@@ -71,8 +77,6 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        // On first mount, if the initial step was invalid, the state is already set to 1.
-        // Now, we correct the URL hash to match the state, completing the redirect.
         if (!isInitialStateSufficient) {
             isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[1];
@@ -80,14 +84,12 @@ const App: React.FC = () => {
 
         const handleHashChange = () => {
             const wasProgrammatic = isProgrammaticNavigationRef.current;
-            isProgrammaticNavigationRef.current = false; // Reset the flag immediately after reading it.
+            isProgrammaticNavigationRef.current = false;
 
             if (isTransitioningRef.current) return;
 
             const newStep = getStepFromHash();
-            const currentStep = stepRef.current;
 
-            // Only perform state validation for EXTERNAL navigation (back/forward button, manual URL entry)
             if (!wasProgrammatic) {
                 const isStateSufficientForStep = (targetStep: number) => {
                     const currentAnswers = answersRef.current;
@@ -105,20 +107,18 @@ const App: React.FC = () => {
                 };
 
                 if (!isStateSufficientForStep(newStep)) {
-                    // This is external navigation to an invalid state. Redirect to the start.
-                    // This hash change will trigger the event listener again, which is fine.
                     window.location.hash = STEP_HASH_MAP[1];
-                    return; // Stop processing this event; the new one for #mood will take over.
+                    return;
                 }
             }
 
-            if (newStep === currentStep) return;
+            if (newStep === stepRef.current) return;
 
             isTransitioningRef.current = true;
             setIsFading(true);
 
             setTimeout(() => {
-                if (newStep < currentStep) {
+                if (newStep < stepRef.current) {
                     setAnswers(currentAnswers => {
                         const newAnswers: PartialUserAnswers = { ...currentAnswers };
                         if (newStep < 4) delete newAnswers.refinements;
@@ -128,7 +128,7 @@ const App: React.FC = () => {
                     });
                 }
 
-                if (currentStep === 6 && newStep !== 6) {
+                if (stepRef.current === 6 && newStep !== 6) {
                     setRecommendation(null);
                 }
 
@@ -140,7 +140,7 @@ const App: React.FC = () => {
 
         window.addEventListener('hashchange', handleHashChange);
         return () => window.removeEventListener('hashchange', handleHashChange);
-    }, []); // Empty dependency array is intentional to set up a single global listener
+    }, []);
 
 
     const fetchRecommendation = useCallback(async (currentAnswers: UserAnswers) => {
@@ -151,7 +151,7 @@ const App: React.FC = () => {
 
         try {
             const translatedAnswers = getTranslatedAnswer(currentAnswers);
-            const result = await getMovieRecommendation(translatedAnswers, previousSuggestions, locale);
+            const result = await getMovieRecommendation(translatedAnswers, previousSuggestions, locale, preferences as UserPreferences);
             setRecommendation(result);
             setPreviousSuggestions(prev => [...prev, result.title]);
             isProgrammaticNavigationRef.current = true;
@@ -163,7 +163,7 @@ const App: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [previousSuggestions, locale, t, getTranslatedAnswer]);
+    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences]);
 
     const handleNext = useCallback((data: PartialUserAnswers) => {
         const newAnswers = { ...answers, ...data };
@@ -202,33 +202,62 @@ const App: React.FC = () => {
             case 5: return <LoadingScreen />;
             case 6: return recommendation ? <RecommendationScreen recommendation={recommendation} answers={answers as UserAnswers} onTryAgain={handleTryAgain} onBack={handleBackFromRecs} /> : <LoadingScreen />;
             default:
-                // This default case handles the safe initial render before the effect runs.
                 return <MoodSelector onSelect={handleNext} />;
         }
     };
 
-    return (
-        <main className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 bg-background overflow-hidden">
-            <header className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
-                <button
-                    onClick={handleReset}
-                    className="text-2xl font-bold transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background rounded-md p-1"
-                    aria-label={t('app.resetAriaLabel')}
-                >
-                    <span className="text-text-primary">{t('common.appName')}</span><span className="text-accent">{t('common.appNameAccent')}</span>
-                </button>
-                <LanguageSwitcher />
-            </header>
+    const renderAuthButton = () => {
+        if (!isFirebaseEnabled) return null;
 
-            {error && (
-                <div className="absolute top-24 bg-red-500/80 text-white p-3 rounded-lg animate-fade-in mb-4 z-20">
-                    {error}
+        if (authLoading) {
+            return <div className="w-8 h-8 p-1"><div className="w-full h-full border-2 rounded-full border-surface border-t-accent animate-spin" /></div>;
+        }
+
+        if (user) {
+            return (
+                <button onClick={() => setProfileModalOpen(true)} className="p-1 rounded-full hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent" aria-label={t('auth.profileTitle')}>
+                    <div className="w-6 h-6 text-text-primary"><UserIcon /></div>
+                </button>
+            )
+        }
+
+        return (
+            <button onClick={() => setAuthModalOpen(true)} className="px-4 py-2 text-sm font-medium rounded-md text-text-primary bg-surface border border-primary hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-accent">
+                {t('auth.login')}
+            </button>
+        )
+    }
+
+    return (
+        <>
+            <main className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 bg-background overflow-hidden">
+                <header className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
+                    <button
+                        onClick={handleReset}
+                        className="text-2xl font-bold transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background rounded-md p-1"
+                        aria-label={t('app.resetAriaLabel')}
+                    >
+                        <span className="text-text-primary">{t('common.appName')}</span><span className="text-accent">{t('common.appNameAccent')}</span>
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <LanguageSwitcher />
+                        {renderAuthButton()}
+                    </div>
+                </header>
+
+                {error && (
+                    <div className="absolute top-24 bg-red-500/80 text-white p-3 rounded-lg animate-fade-in mb-4 z-20">
+                        {error}
+                    </div>
+                )}
+                <div className={`transition-opacity duration-300 ease-in-out w-full mt-20 sm:mt-0 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
+                    {renderStep()}
                 </div>
-            )}
-            <div className={`transition-opacity duration-300 ease-in-out w-full mt-20 sm:mt-0 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
-                {renderStep()}
-            </div>
-        </main>
+            </main>
+
+            {isFirebaseEnabled && <AuthModal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} />}
+            {isFirebaseEnabled && <ProfileModal isOpen={isProfileModalOpen} onClose={() => setProfileModalOpen(false)} />}
+        </>
     );
 };
 

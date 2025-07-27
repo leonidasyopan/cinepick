@@ -1,6 +1,6 @@
 
 import { getAI, getGenerativeModel, GoogleAIBackend, Schema } from "firebase/ai";
-import type { TranslatedUserAnswers, MovieRecommendation } from '../types';
+import type { TranslatedUserAnswers, MovieRecommendation, UserPreferences } from '../types';
 
 // Import the existing Firebase app instance
 import firebaseApp from '../../../firebase';
@@ -8,8 +8,21 @@ import firebaseApp from '../../../firebase';
 // Import TMDb service for movie details enrichment
 import { fetchMovieDetailsFromTMDb } from './tmdbService';
 
-// Initialize Firebase AI with Gemini backend
-const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
+// Initialize Firebase AI with Gemini backend, with error handling for potential issues
+let ai;
+try {
+    if (!firebaseApp) {
+        console.warn('Firebase app is not initialized. Make sure environment variables are correctly set.');
+        throw new Error('Firebase app initialization failed');
+    }
+    // Initialize with the Firebase app
+    ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
+} catch (error) {
+    console.error('Error initializing AI:', error);
+    // In a deployed app, this will prevent the app from working, but at least
+    // it won't crash immediately and will show a meaningful error
+    throw new Error('Failed to initialize AI services. Please check your configuration.');
+}
 
 // Schema definition for structured response using Schema class
 const recommendationSchema = Schema.object({
@@ -29,12 +42,21 @@ const recommendationSchema = Schema.object({
 export const getMovieRecommendation = async (
     answers: TranslatedUserAnswers,
     previousSuggestions: string[] = [],
-    locale: string = 'en-us'
+    locale: string = 'en-us',
+    preferences?: UserPreferences
 ): Promise<MovieRecommendation> => {
 
     const previousSuggestionsText = previousSuggestions.length > 0
         ? `Please do not suggest the following movies again: ${previousSuggestions.join(', ')}.`
         : '';
+        
+    let preferencesText = '';
+    if (preferences?.startYear && preferences.startYear > 1900) {
+        preferencesText += `\n- The movie must have been released in or after ${preferences.startYear}.`;
+    }
+    if (preferences?.ageRating && preferences.ageRating !== 'Any') {
+        preferencesText += `\n- The movie's content rating (e.g., in the USA: G, PG, PG-13, R, NC-17) must be no stricter than ${preferences.ageRating}. For example, if 'PG-13' is specified, you can suggest 'G', 'PG', or 'PG-13' movies, but not 'R' or 'NC-17'.`;
+    }
 
     const languageMap: Record<string, string> = {
         'en-us': 'English',
@@ -54,7 +76,9 @@ export const getMovieRecommendation = async (
         - Occasion: It's for a '${answers.occasion}'.
         - Desired Themes: They chose these characteristics: ${answers.refinements.join(', ')}. Use these to narrow down the perfect genre and movie.
 
-        Based on these choices, provide one movie recommendation.
+        ${preferencesText ? `Additionally, the user has set the following hard constraints which you MUST follow:${preferencesText}` : ''}
+
+        Based on all these choices, provide one movie recommendation.
         ${previousSuggestionsText}
         
         Return the response in JSON format according to the provided schema. The 'justification' field must be in ${languageName}.
