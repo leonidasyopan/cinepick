@@ -127,28 +127,69 @@ export const StreamingProviders: React.FC<StreamingProvidersProps> = ({
     <div className={`${className}`}>
       <h3 className="text-lg font-bold mb-3 text-text-primary">{t('recommendationScreen.watchOn')}</h3>
       <div className="flex items-center justify-center lg:justify-start gap-3">
-        {displayedProviders.length > 0 ? displayedProviders.slice(0, 5).map((provider) => (
-          <a 
-            href={provider.directUrl || provider.link} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            key={provider.provider_id} 
-            className="flex flex-col items-center gap-1 group"
-            title={`Watch on ${provider.provider_name}`}
-          >
-            <img 
-              src={`${IMAGE_BASE_URL}w92${provider.logo_path}`} 
-              alt={provider.provider_name} 
-              className="w-10 h-10 rounded-md transition-transform group-hover:scale-110" 
-            />
-            <span className="text-xs text-text-secondary">{provider.provider_name}</span>
-          </a>
-        )) : (streamingServices && streamingServices.length > 0) ? streamingServices.map((service, index) => (
-          <div key={index} className="flex flex-col items-center gap-2">
-            {getStreamingIcon(service)}
-            <span className="text-xs text-text-secondary">{service}</span>
-          </div>
-        )) : <p className="text-text-secondary">{t('recommendationScreen.noStreamingInfo')}</p>}
+        {displayedProviders.length > 0 ? (
+          // Show providers from TMDB if available
+          displayedProviders.slice(0, 5).map((provider) => (
+            <a 
+              href={provider.directUrl || provider.link} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              key={provider.provider_id} 
+              className="flex flex-col items-center gap-1 group"
+              title={`Watch on ${provider.provider_name}`}
+            >
+              <img 
+                src={`${IMAGE_BASE_URL}w92${provider.logo_path}`} 
+                alt={provider.provider_name} 
+                className="w-10 h-10 rounded-md transition-transform group-hover:scale-110" 
+              />
+              <span className="text-xs text-text-secondary">{provider.provider_name}</span>
+            </a>
+          ))
+        ) : streamingServices && streamingServices.length > 0 ? (
+          // Fallback to AI-recommended services with clickable links
+          streamingServices.map((service, index) => {
+            // Generate appropriate URL for each service
+            const serviceLower = service.toLowerCase();
+            let serviceUrl = '';
+            
+            // Map common services to their URLs
+            if (serviceLower.includes('netflix')) {
+              serviceUrl = `https://www.netflix.com/search?q=${encodeURIComponent(title)}`;
+            } else if (serviceLower.includes('prime') || serviceLower.includes('amazon')) {
+              serviceUrl = `https://www.amazon.com/s?k=${encodeURIComponent(title)}&i=instant-video`;
+            } else if (serviceLower.includes('disney')) {
+              const slugifiedTitle = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim();
+              serviceUrl = `https://www.disneyplus.com/movies/${slugifiedTitle}`;
+            } else if (serviceLower.includes('max')) {
+              serviceUrl = `https://www.max.com/search?q=${encodeURIComponent(title)}`;
+            } else if (serviceLower.includes('hulu')) {
+              serviceUrl = `https://www.hulu.com/search?q=${encodeURIComponent(title)}`;
+            } else if (serviceLower.includes('apple')) {
+              serviceUrl = `https://tv.apple.com/search?term=${encodeURIComponent(title)}`;
+            } else {
+              // Generic search fallback
+              serviceUrl = `https://www.google.com/search?q=watch+${encodeURIComponent(title)}+on+${encodeURIComponent(service)}`;
+            }
+            
+            return (
+              <a 
+                key={index} 
+                href={serviceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1 group"
+                title={`Watch on ${service}`}
+              >
+                {getStreamingIcon(service)}
+                <span className="text-xs text-text-secondary">{service}</span>
+              </a>
+            );
+          })
+        ) : (
+          // No provider information available
+          <p className="text-text-secondary">{t('recommendationScreen.noStreamingInfo')}</p>
+        )}
       </div>
     </div>
   );

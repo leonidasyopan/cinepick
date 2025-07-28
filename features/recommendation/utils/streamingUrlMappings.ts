@@ -63,17 +63,74 @@ export const streamingUrlMappings: StreamingUrlMappings = {
     },
     priority: 1
   },
+  "Prime Video": {
+    generateUrl: (_provider, title, _year, imdbId) => {
+      if (imdbId) {
+        return `https://www.amazon.com/gp/video/detail/${imdbId}`;
+      }
+      return `https://www.amazon.com/s?k=${encodeURIComponent(title)}&i=instant-video`;
+    },
+    priority: 1
+  },
+  "Amazon Video": {
+    generateUrl: (_provider, title, _year, imdbId) => {
+      if (imdbId) {
+        return `https://www.amazon.com/gp/video/detail/${imdbId}`;
+      }
+      return `https://www.amazon.com/s?k=${encodeURIComponent(title)}&i=instant-video`;
+    },
+    priority: 1
+  },
 
   // Disney+ - Provider ID: 337
   337: {
-    generateUrl: (_provider, title) => {
-      return `https://www.disneyplus.com/search?q=${encodeURIComponent(title)}`;
+    generateUrl: (_provider, title, _year, _imdbId, tmdbId) => {
+      // Disney+ works better with their content page than direct search
+      // Format the title for use in URL slugs
+      const slugifiedTitle = title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '') // Remove special chars
+        .replace(/\s+/g, '-')     // Replace spaces with hyphens
+        .trim();
+      
+      // For English language content
+      if (tmdbId) {
+        return `https://www.disneyplus.com/movies/${slugifiedTitle}/${tmdbId}`;
+      }
+      
+      return `https://www.disneyplus.com/movies/${slugifiedTitle}`;
     },
     priority: 1
   },
   "Disney+": {
-    generateUrl: (_provider, title) => {
-      return `https://www.disneyplus.com/search?q=${encodeURIComponent(title)}`;
+    generateUrl: (_provider, title, _year, _imdbId, tmdbId) => {
+      const slugifiedTitle = title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '') 
+        .replace(/\s+/g, '-')     
+        .trim();
+      
+      if (tmdbId) {
+        return `https://www.disneyplus.com/movies/${slugifiedTitle}/${tmdbId}`;
+      }
+      
+      return `https://www.disneyplus.com/movies/${slugifiedTitle}`;
+    },
+    priority: 1
+  },
+  "Disney Plus": {
+    generateUrl: (_provider, title, _year, _imdbId, tmdbId) => {
+      const slugifiedTitle = title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '') 
+        .replace(/\s+/g, '-')     
+        .trim();
+      
+      if (tmdbId) {
+        return `https://www.disneyplus.com/movies/${slugifiedTitle}/${tmdbId}`;
+      }
+      
+      return `https://www.disneyplus.com/movies/${slugifiedTitle}`;
     },
     priority: 1
   },
@@ -149,6 +206,36 @@ export const streamingUrlMappings: StreamingUrlMappings = {
   },
 
   // Generic fallback for any provider not explicitly mapped
+  // fuboTV - Provider ID: 257
+  257: {
+    generateUrl: (_provider, title) => {
+      // fuboTV uses a search interface
+      return `https://www.fubo.tv/search/${encodeURIComponent(title)}`;
+    },
+    priority: 1
+  },
+  "fuboTV": {
+    generateUrl: (_provider, title) => {
+      return `https://www.fubo.tv/search/${encodeURIComponent(title)}`;
+    },
+    priority: 1
+  },
+
+  // YouTube TV - Provider ID: 2528
+  2528: {
+    generateUrl: (_provider, title) => {
+      // YouTube TV uses a search interface
+      return `https://tv.youtube.com/search/${encodeURIComponent(title)}`;
+    },
+    priority: 1
+  },
+  "Youtube TV": {
+    generateUrl: (_provider, title) => {
+      return `https://tv.youtube.com/search/${encodeURIComponent(title)}`;
+    },
+    priority: 1
+  },
+
   "default": {
     generateUrl: (provider) => {
       // Return the TMDB JustWatch page as fallback
@@ -175,19 +262,50 @@ export const generateStreamingUrl = (
   imdbId?: string,
   tmdbId?: number
 ): string => {
+  console.log('Generating streaming URL for provider:', JSON.stringify(provider));
+  
   // Try to find a mapping by provider ID first
   let urlPattern = streamingUrlMappings[provider.provider_id];
   
-  // If no mapping by ID, try by name
+  // If no mapping by ID, try by exact name
   if (!urlPattern) {
     urlPattern = streamingUrlMappings[provider.provider_name];
+    console.log('Looking for exact name match:', provider.provider_name, urlPattern ? 'found' : 'not found');
+  }
+  
+  // If still no mapping, try case-insensitive name matching
+  if (!urlPattern) {
+    // Try to find a case-insensitive match among our supported providers
+    const providerNameLower = provider.provider_name.toLowerCase();
+    const possibleMatches = Object.keys(streamingUrlMappings).filter(key => {
+      if (typeof key === 'string' && isNaN(Number(key))) {
+        return key.toLowerCase().includes(providerNameLower) || 
+               providerNameLower.includes(key.toLowerCase());
+      }
+      return false;
+    });
+    
+    if (possibleMatches.length > 0) {
+      console.log('Found fuzzy matches for provider:', possibleMatches);
+      urlPattern = streamingUrlMappings[possibleMatches[0]];
+    }
+  }
+  
+  // Special case for Prime Video / Amazon variations
+  if (!urlPattern && provider.provider_name.toLowerCase().includes('prime') || 
+      provider.provider_name.toLowerCase().includes('amazon')) {
+    console.log('Using Amazon Prime fallback for:', provider.provider_name);
+    urlPattern = streamingUrlMappings['Prime Video'];
   }
   
   // If still no mapping, use the default
   if (!urlPattern) {
+    console.log('No mapping found for provider, using default:', provider.provider_name);
     urlPattern = streamingUrlMappings["default"];
   }
   
   // Generate the URL using the pattern
-  return urlPattern.generateUrl(provider, title, year, imdbId, tmdbId);
+  const url = urlPattern.generateUrl(provider, title, year, imdbId, tmdbId);
+  console.log('Generated URL:', url);
+  return url;
 };

@@ -205,8 +205,12 @@ export const fetchStreamingProviders = async (
     // Fetch providers
     const providers = await getWatchProviders(movieId, locale);
     
+    console.log('TMDB Raw Providers for', title, ':', JSON.stringify(providers, null, 2));
+    
     // Enhance providers with direct streaming URLs
     const enhancedProviders = providers.map(provider => {
+      console.log('Processing provider:', provider.provider_name, 'ID:', provider.provider_id);
+      
       const directUrl = generateStreamingUrl(
         provider,
         title,
@@ -214,6 +218,8 @@ export const fetchStreamingProviders = async (
         imdbId,
         movieId
       );
+      
+      console.log('Generated URL for', provider.provider_name, ':', directUrl);
       
       return {
         ...provider,
