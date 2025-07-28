@@ -55,15 +55,27 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                     'en-US' // Could be made configurable
                 );
                 
-                // Merge the details with our existing recommendation
-                setRecommendation(prev => ({
-                    ...prev,
-                    ...tmdbDetails,
-                    // If we got new providers from TMDB, prefer those over AI-generated ones
-                    streamingServices: tmdbDetails.watchProviders && tmdbDetails.watchProviders.length > 0 
-                        ? undefined 
-                        : prev.streamingServices
-                }));
+                console.log('TMDB Details received:', JSON.stringify(tmdbDetails, null, 2));
+                
+                // Only merge the details if we actually got something back
+                if (tmdbDetails && Object.keys(tmdbDetails).length > 0) {
+                    // Merge the details with our existing recommendation
+                    // Making sure we don't override existing values with undefined
+                    setRecommendation(prev => {
+                        const merged = {
+                            ...prev,
+                            ...tmdbDetails,
+                            // Make sure we don't lose the poster path if it exists
+                            posterPath: tmdbDetails.posterPath || prev.posterPath,
+                            // If we got new providers from TMDB, prefer those over AI-generated ones
+                            streamingServices: tmdbDetails.watchProviders && tmdbDetails.watchProviders.length > 0 
+                                ? undefined 
+                                : prev.streamingServices
+                        };
+                        console.log('Updated recommendation:', merged);
+                        return merged;
+                    });
+                }
             } catch (error) {
                 console.error('Error enhancing recommendation with TMDB details:', error);
                 // Continue showing the recommendation with minimal data

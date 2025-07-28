@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { WatchProvider } from '../types';
 import { IMAGE_BASE_URL, fetchStreamingProviders } from '../services/tmdbService';
 import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon } from '../../../components/icons/index';
@@ -29,49 +29,70 @@ export const StreamingProviders: React.FC<StreamingProvidersProps> = ({
   className = ''
 }) => {
   const { t } = useI18n();
-  const [providers, setProviders] = useState<WatchProvider[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Use refs to track whether we've already shown providers or are fetching
+  const [displayedProviders, setDisplayedProviders] = useState<WatchProvider[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(watchProviders.length === 0);
+  const hasFetchedRef = useRef(false);
+  const initialProvidersShownRef = useRef(false);
   
   useEffect(() => {
+    // If we already have stable providers with direct links, don't reload
+    if (hasFetchedRef.current) return;
+    
     const loadProviders = async () => {
-      // Start with loading state
-      setIsLoading(true);
+      // If we don't have any initial providers, show loading state
+      if (watchProviders.length === 0) {
+        setIsLoading(true);
+      }
+      // Use initial providers if available (only once)
+      else if (!initialProvidersShownRef.current) {
+        initialProvidersShownRef.current = true;
+        setDisplayedProviders(watchProviders);
+        setIsLoading(false);
+      }
       
-      try {
-        // Use existing providers if available (for better perceived performance)
-        if (watchProviders && watchProviders.length > 0) {
-          setProviders(watchProviders);
-          setIsLoading(false);
-        }
-        
-        // If we have a tmdbId, fetch fresh providers asynchronously
-        if (tmdbId) {
-          // This is a completely separate API call for better performance
+      // Only fetch fresh data if we have a tmdbId
+      if (tmdbId) {
+        try {
+          // Make API call - this won't cause state updates until complete
           const freshProviders = await fetchStreamingProviders(
             tmdbId,
             title,
             year,
-            'en-US', // We could pass locale as a prop if needed
+            'en-US',
             imdbId
           );
           
-          if (freshProviders.length > 0) {
-            setProviders(freshProviders);
+          // Only update state if we got better data
+          if (freshProviders && freshProviders.length > 0) {
+            hasFetchedRef.current = true; // Mark as having fetched final data
+            setDisplayedProviders(freshProviders);
+          } 
+          // If we got no providers but had initial ones, keep showing those
+          else if (watchProviders.length > 0) {
+            hasFetchedRef.current = true;
+          } else {
+            // No providers from either source - mark as fetched to prevent endless loading
+            hasFetchedRef.current = true;
           }
+          
+          // Always turn off loading when fetch completes
+          setIsLoading(false);
+        } catch (error) {
+          console.error('Error fetching streaming providers:', error);
+          // If fetch fails but we have initial providers, keep showing those
+          if (watchProviders.length > 0) {
+            setDisplayedProviders(watchProviders);
+          }
+          hasFetchedRef.current = true; // Always mark as fetched on error to prevent retries
+          // Always turn off loading even on error
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching streaming providers:', error);
-        // Keep any existing providers we may have
-        if (watchProviders && watchProviders.length > 0) {
-          setProviders(watchProviders);
-        }
-      } finally {
-        setIsLoading(false);
       }
     };
     
     loadProviders();
-  }, [watchProviders, title, year, imdbId, tmdbId]);
+  }, [tmdbId]); // Only dependent on tmdbId - other props shouldn't trigger refetching
   
   // Helper function to get the appropriate icon for a streaming service
   const getStreamingIcon = (serviceName: string) => {
@@ -106,7 +127,7 @@ export const StreamingProviders: React.FC<StreamingProvidersProps> = ({
     <div className={`${className}`}>
       <h3 className="text-lg font-bold mb-3 text-text-primary">{t('recommendationScreen.watchOn')}</h3>
       <div className="flex items-center justify-center lg:justify-start gap-3">
-        {providers.length > 0 ? providers.slice(0, 5).map((provider) => (
+        {displayedProviders.length > 0 ? displayedProviders.slice(0, 5).map((provider) => (
           <a 
             href={provider.directUrl || provider.link} 
             target="_blank" 
