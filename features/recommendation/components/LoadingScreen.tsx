@@ -19,26 +19,34 @@ const LoadingScreen: React.FC = () => {
 
     const validMovies = useMemo(() => movies.filter(m => m.posterPath), [movies]);
 
-    // Set a random starting index once movies are loaded
+    // Create a triplicated list to make the loop practically infinite for this screen's lifetime.
+    const loopedMovies = useMemo(() => {
+        if (validMovies.length === 0) return [];
+        return [...validMovies, ...validMovies, ...validMovies];
+    }, [validMovies]);
+
+    // Set a random starting index in the *middle* of the looped list
     useEffect(() => {
         if (validMovies.length > 0 && currentIndex === null) {
-            setCurrentIndex(Math.floor(Math.random() * validMovies.length));
+            // Start in the second repetition of the list to ensure seamless looping
+            const randomIndex = Math.floor(Math.random() * validMovies.length);
+            setCurrentIndex(validMovies.length + randomIndex);
         }
     }, [validMovies, currentIndex]);
 
-    // Set up the auto-scrolling interval
+    // Set up the auto-scrolling interval to continuously increment the index
     useEffect(() => {
-        if (validMovies.length > 1 && currentIndex !== null) {
+        if (loopedMovies.length > 1 && currentIndex !== null) {
             const interval = setInterval(() => {
-                setCurrentIndex(prevIndex => (((prevIndex ?? 0) + 1) % validMovies.length));
+                setCurrentIndex(prevIndex => (prevIndex ?? 0) + 1);
             }, 3000); // Change movie every 3 seconds
 
             return () => clearInterval(interval);
         }
-    }, [validMovies.length, currentIndex]);
+    }, [loopedMovies.length, currentIndex]);
 
-    // Fallback to the classic spinner if movies aren't loaded yet or there are none
-    if (isLoading || validMovies.length === 0 || currentIndex === null) {
+    // Fallback to the classic spinner
+    if (isLoading || loopedMovies.length === 0 || currentIndex === null) {
         return (
             <div className="flex flex-col items-center justify-center gap-6 animate-fade-in">
                 <div className="w-16 h-16 border-4 border-t-4 border-t-accent border-surface rounded-full animate-spin"></div>
@@ -47,11 +55,9 @@ const LoadingScreen: React.FC = () => {
         );
     }
 
-    // This calculation re-calculates on every render.
-    // Given this is a short-lived loading screen, this is acceptable.
-    const cardWidthRem = 48; // Corresponds to w-48
-    const cardWidthMdRem = 52; // Corresponds to md:w-52
-    const gapRem = 4; // Corresponds to gap-4
+    const cardWidthRem = 48; // w-48
+    const cardWidthMdRem = 52; // md:w-52
+    const gapRem = 4; // gap-4
 
     const cardWidthPx = parseFloat(getComputedStyle(document.documentElement).fontSize) * (window.innerWidth < 768 ? cardWidthRem / 4 : cardWidthMdRem / 4);
     const gapPx = parseFloat(getComputedStyle(document.documentElement).fontSize) * (gapRem / 4);
@@ -74,7 +80,7 @@ const LoadingScreen: React.FC = () => {
                     className="absolute flex items-center gap-4 transition-transform duration-700 ease-in-out"
                     style={{ transform: `translateX(${offset}px)` }}
                 >
-                    {validMovies.map((movie, index) => {
+                    {loopedMovies.map((movie, index) => {
                         const isActive = index === currentIndex;
                         return (
                             <div
@@ -86,17 +92,15 @@ const LoadingScreen: React.FC = () => {
                                     alt={movie.title}
                                     className="w-full h-auto object-cover"
                                 />
-                                {isActive && (
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
-                                        <div className="absolute bottom-0 left-0 p-3 text-white">
-                                            <h3 className="font-bold text-sm leading-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">{movie.title}</h3>
-                                            <div className="flex items-center gap-1 mt-1">
-                                                <StarIcon className="w-4 h-4 text-accent" />
-                                                <span className="text-xs font-semibold">{movie.rating.toFixed(1)}</span>
-                                            </div>
+                                <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
+                                    <div className="absolute bottom-0 left-0 p-3 text-white w-full">
+                                        <h3 className="font-bold text-lg leading-tight [text-shadow:0_2px_8px_rgba(0,0,0,1)]">{movie.title}</h3>
+                                        <div className="flex items-center gap-1 mt-1">
+                                            <StarIcon className="w-5 h-5 text-accent" />
+                                            <span className="text-sm font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,1)]">{movie.rating.toFixed(1)}</span>
                                         </div>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         );
                     })}
