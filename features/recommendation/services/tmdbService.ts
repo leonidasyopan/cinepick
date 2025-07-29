@@ -1,5 +1,7 @@
 
+
 import type { MovieRecommendation, WatchProvider } from '../types';
+import { getProviderSearchLink } from './providerLinkService';
 
 // Check for both API key and access token
 if (!import.meta.env.VITE_TMDB_API_KEY) {
@@ -52,19 +54,21 @@ interface TmdbWatchProviderResult {
     [countryCode: string]: {
       link: string;
       flatrate?: { provider_id: number, provider_name: string, logo_path: string }[];
+      rent?: { provider_id: number, provider_name: string, logo_path: string }[];
+      buy?: { provider_id: number, provider_name: string, logo_path: string }[];
+      ads?: { provider_id: number, provider_name: string, logo_path: string }[];
     }
   }
 }
 
-const searchMovie = async (title: string, year: number, locale: string): Promise<number | null> => {
+const searchMovie = async (title: string, year: number): Promise<number | null> => {
   const url = new URL(`${BASE_URL}/search/movie`);
-  const tmdbLocale = formatLocaleForTMDb(locale);
 
   url.searchParams.append('query', title);
-  url.searchParams.append('language', tmdbLocale);
   if (year) {
     url.searchParams.append('year', year.toString());
   }
+  url.searchParams.append('include_adult', 'false');
 
   const options = {
     method: 'GET',
@@ -116,6 +120,7 @@ const getMovieDetails = async (movieId: number, locale: string): Promise<Partial
     const cast = data.credits.cast.slice(0, 4).map(c => c.name);
 
     return {
+      title: data.title,
       posterPath: data.poster_path ?? undefined,
       synopsis: data.overview,
       runtime: data.runtime,
@@ -130,7 +135,7 @@ const getMovieDetails = async (movieId: number, locale: string): Promise<Partial
   }
 };
 
-const getWatchProviders = async (movieId: number, locale: string): Promise<WatchProvider[]> => {
+const getWatchProviders = async (movieId: number, locale: string, movieTitle: string): Promise<WatchProvider[]> => {
   const countryCode = locale.split('-')[1]?.toUpperCase() || 'US';
   const url = new URL(`${BASE_URL}/movie/${movieId}/watch/providers`);
 
@@ -148,12 +153,31 @@ const getWatchProviders = async (movieId: number, locale: string): Promise<Watch
     const data: TmdbWatchProviderResult = await response.json();
 
     const countryProviders = data.results[countryCode];
-    if (!countryProviders || !countryProviders.flatrate) return [];
+    if (!countryProviders) return [];
 
-    return countryProviders.flatrate.map(p => ({
-      ...p,
-      link: countryProviders.link
-    }));
+    const allProviderGroups = [
+      ...(countryProviders.flatrate || []),
+      ...(countryProviders.buy || []),
+      ...(countryProviders.rent || []),
+      ...(countryProviders.ads || []),
+    ];
+
+    if (allProviderGroups.length === 0) return [];
+
+    const uniqueProviders = new Map<number, WatchProvider>();
+    allProviderGroups.forEach(p => {
+      if (!uniqueProviders.has(p.provider_id)) {
+        const providerSearchLink = getProviderSearchLink(p.provider_name, movieTitle);
+        const googleSearchFallback = `https://www.google.com/search?q=${encodeURIComponent(movieTitle)}+${encodeURIComponent(p.provider_name)}`;
+
+        uniqueProviders.set(p.provider_id, {
+          ...p,
+          link: providerSearchLink || countryProviders.link || googleSearchFallback,
+        });
+      }
+    });
+
+    return Array.from(uniqueProviders.values());
 
   } catch (error) {
     console.error("TMDb getWatchProviders failed:", error);
@@ -161,20 +185,38 @@ const getWatchProviders = async (movieId: number, locale: string): Promise<Watch
   }
 };
 
-export const fetchMovieDetailsFromTMDb = async (title: string, year: number, locale: string): Promise<Partial<MovieRecommendation>> => {
-  const movieId = await searchMovie(title, year, locale);
+export const fetchMovieDetailsFromTMDb = async (originalTitle: string, year: number, locale: string): Promise<Partial<MovieRecommendation>> => {
+  // Search with the original title for the best match.
+  const movieId = await searchMovie(originalTitle, year);
   if (!movieId) {
-    console.warn(`Movie "${title}" (${year}) not found on TMDb.`);
+    console.warn(`Movie "${originalTitle}" (${year}) not found on TMDb.`);
     return {};
   }
 
+  // Then fetch details and providers using the found ID and the desired locale.
   const [details, providers] = await Promise.all([
     getMovieDetails(movieId, locale),
-    getWatchProviders(movieId, locale)
+    getWatchProviders(movieId, locale, originalTitle)
   ]);
 
   return {
     ...details,
-    watchProviders: providers
+    watchProviders: providers,
+    tmdbId: movieId,
+    originalTitle: originalTitle,
   };
+};
+
+export const reFetchMovieDetails = async (tmdbId: number, originalTitle: string, newLocale: string): Promise<Partial<MovieRecommendation>> => {
+  if (!tmdbId) return {};
+
+  const [details, providers] = await Promise.all([
+    getMovieDetails(tmdbId, newLocale),
+    getWatchProviders(tmdbId, newLocale, originalTitle)
+  ]);
+
+  return {
+    ...details,
+    watchProviders: providers,
+  }
 };
