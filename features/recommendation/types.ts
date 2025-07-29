@@ -30,6 +30,8 @@ export interface MovieRecommendation {
   justification: string;
   trailerSearchQuery: string;
   // --- New fields from TMDb ---
+  tmdbId?: number;
+  originalTitle?: string;
   posterPath?: string;
   synopsis?: string;
   runtime?: number; // in minutes
