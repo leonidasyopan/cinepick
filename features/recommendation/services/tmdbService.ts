@@ -116,6 +116,7 @@ const getMovieDetails = async (movieId: number, locale: string): Promise<Partial
     const cast = data.credits.cast.slice(0, 4).map(c => c.name);
 
     return {
+      title: data.title,
       posterPath: data.poster_path ?? undefined,
       synopsis: data.overview,
       runtime: data.runtime,
