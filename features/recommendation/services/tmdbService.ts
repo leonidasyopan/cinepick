@@ -1,5 +1,6 @@
 
 import type { MovieRecommendation, WatchProvider } from '../types';
+import { getProviderSearchLink } from './providerLinkService';
 
 // Check for both API key and access token
 if (!import.meta.env.VITE_TMDB_API_KEY) {
@@ -52,19 +53,21 @@ interface TmdbWatchProviderResult {
     [countryCode: string]: {
       link: string;
       flatrate?: { provider_id: number, provider_name: string, logo_path: string }[];
+      rent?: { provider_id: number, provider_name: string, logo_path: string }[];
+      buy?: { provider_id: number, provider_name: string, logo_path: string }[];
+      ads?: { provider_id: number, provider_name: string, logo_path: string }[];
     }
   }
 }
 
-const searchMovie = async (title: string, year: number, locale: string): Promise<number | null> => {
+const searchMovie = async (title: string, year: number): Promise<number | null> => {
   const url = new URL(`${BASE_URL}/search/movie`);
-  const tmdbLocale = formatLocaleForTMDb(locale);
 
   url.searchParams.append('query', title);
-  url.searchParams.append('language', tmdbLocale);
   if (year) {
     url.searchParams.append('year', year.toString());
   }
+  url.searchParams.append('include_adult', 'false');
 
   const options = {
     method: 'GET',
@@ -131,7 +134,7 @@ const getMovieDetails = async (movieId: number, locale: string): Promise<Partial
   }
 };
 
-const getWatchProviders = async (movieId: number, locale: string): Promise<WatchProvider[]> => {
+const getWatchProviders = async (movieId: number, locale: string, movieTitle: string): Promise<WatchProvider[]> => {
   const countryCode = locale.split('-')[1]?.toUpperCase() || 'US';
   const url = new URL(`${BASE_URL}/movie/${movieId}/watch/providers`);
 
@@ -149,12 +152,34 @@ const getWatchProviders = async (movieId: number, locale: string): Promise<Watch
     const data: TmdbWatchProviderResult = await response.json();
 
     const countryProviders = data.results[countryCode];
-    if (!countryProviders || !countryProviders.flatrate) return [];
+    if (!countryProviders) return [];
 
-    return countryProviders.flatrate.map(p => ({
-      ...p,
-      link: countryProviders.link
-    }));
+    // Combine all provider types (flatrate, buy, rent, etc.)
+    const allProviderGroups = [
+      ...(countryProviders.flatrate || []),
+      ...(countryProviders.buy || []),
+      ...(countryProviders.rent || []),
+      ...(countryProviders.ads || []),
+    ];
+
+    if (allProviderGroups.length === 0) return [];
+
+    // Use a Map to store unique providers by their ID to avoid duplicates
+    const uniqueProviders = new Map<number, WatchProvider>();
+    allProviderGroups.forEach(p => {
+      if (!uniqueProviders.has(p.provider_id)) {
+        const providerSearchLink = getProviderSearchLink(p.provider_name, movieTitle);
+        const googleSearchFallback = `https://www.google.com/search?q=${encodeURIComponent(movieTitle)}+${encodeURIComponent(p.provider_name)}`;
+
+        uniqueProviders.set(p.provider_id, {
+          ...p,
+          // Prioritize the specific search link. Fallback to JustWatch, then to Google.
+          link: providerSearchLink || countryProviders.link || googleSearchFallback,
+        });
+      }
+    });
+
+    return Array.from(uniqueProviders.values());
 
   } catch (error) {
     console.error("TMDb getWatchProviders failed:", error);
@@ -163,15 +188,17 @@ const getWatchProviders = async (movieId: number, locale: string): Promise<Watch
 };
 
 export const fetchMovieDetailsFromTMDb = async (title: string, year: number, locale: string): Promise<Partial<MovieRecommendation>> => {
-  const movieId = await searchMovie(title, year, locale);
+  // First, search without locale to get the best match for the original title
+  const movieId = await searchMovie(title, year);
   if (!movieId) {
     console.warn(`Movie "${title}" (${year}) not found on TMDb.`);
     return {};
   }
 
+  // Then, fetch details and providers, passing the original title for search link generation
   const [details, providers] = await Promise.all([
     getMovieDetails(movieId, locale),
-    getWatchProviders(movieId, locale)
+    getWatchProviders(movieId, locale, title)
   ]);
 
   return {
