@@ -13,7 +13,9 @@ import { useI18n } from './src/i18n/i18n';
 import { useAuth } from './features/auth/AuthContext';
 import AuthModal from './features/auth/components/AuthModal';
 import ProfileModal from './features/auth/components/ProfileModal';
-import { UserIcon } from './components/icons';
+import { UserIcon, HistoryIcon } from './components/icons';
+import { useHistory } from './features/history/HistoryContext';
+import HistoryModal from './features/history/components/HistoryModal';
 
 const STEP_HASH_MAP: { [key: number]: string } = {
     1: 'mood',
@@ -38,6 +40,7 @@ const isInitialStateSufficient = initialStep <= 1;
 const App: React.FC = () => {
     const { t, locale, getTranslatedAnswer } = useI18n();
     const { user, loading: authLoading, preferences, isFirebaseEnabled } = useAuth();
+    const { addHistoryItem } = useHistory();
 
     const [step, setStep] = useState(isInitialStateSufficient ? initialStep : 1);
     const [answers, setAnswers] = useState<PartialUserAnswers>({});
@@ -48,6 +51,7 @@ const App: React.FC = () => {
     const [isFading, setIsFading] = useState(false);
     const [isAuthModalOpen, setAuthModalOpen] = useState(false);
     const [isProfileModalOpen, setProfileModalOpen] = useState(false);
+    const [isHistoryModalOpen, setHistoryModalOpen] = useState(false);
 
     const answersRef = useRef(answers);
     answersRef.current = answers;
@@ -153,6 +157,9 @@ const App: React.FC = () => {
             const translatedAnswers = getTranslatedAnswer(currentAnswers);
             const result = await getMovieRecommendation(translatedAnswers, previousSuggestions, locale, preferences as UserPreferences);
             setRecommendation(result);
+            if (user && result.tmdbId) {
+                addHistoryItem(result, currentAnswers);
+            }
             setPreviousSuggestions(prev => [...prev, result.title]);
             isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[6];
@@ -163,7 +170,7 @@ const App: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences]);
+    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences, user, addHistoryItem]);
 
     const handleNext = useCallback((data: PartialUserAnswers) => {
         const newAnswers = { ...answers, ...data };
@@ -206,7 +213,7 @@ const App: React.FC = () => {
         }
     };
 
-    const renderAuthButton = () => {
+    const renderAuthSection = () => {
         if (!isFirebaseEnabled) return null;
 
         if (authLoading) {
@@ -215,9 +222,14 @@ const App: React.FC = () => {
 
         if (user) {
             return (
-                <button onClick={() => setProfileModalOpen(true)} className="p-1 rounded-full hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent" aria-label={t('auth.profileTitle')}>
-                    <div className="w-6 h-6 text-text-primary"><UserIcon /></div>
-                </button>
+                <>
+                    <button onClick={() => setHistoryModalOpen(true)} className="p-1 rounded-full hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent" aria-label={t('auth.historyTitle')}>
+                        <div className="w-6 h-6 text-text-primary"><HistoryIcon /></div>
+                    </button>
+                    <button onClick={() => setProfileModalOpen(true)} className="p-1 rounded-full hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent" aria-label={t('auth.profileTitle')}>
+                        <div className="w-6 h-6 text-text-primary"><UserIcon /></div>
+                    </button>
+                </>
             )
         }
 
@@ -241,7 +253,7 @@ const App: React.FC = () => {
                     </button>
                     <div className="flex items-center gap-2">
                         <LanguageSwitcher />
-                        {renderAuthButton()}
+                        {renderAuthSection()}
                     </div>
                 </header>
 
@@ -257,6 +269,7 @@ const App: React.FC = () => {
 
             {isFirebaseEnabled && <AuthModal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} />}
             {isFirebaseEnabled && <ProfileModal isOpen={isProfileModalOpen} onClose={() => setProfileModalOpen(false)} />}
+            {isFirebaseEnabled && <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setHistoryModalOpen(false)} />}
         </>
     );
 };
