@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { UserAnswers, PartialUserAnswers, MovieRecommendation, UserPreferences } from './features/recommendation/types';
 import { getMovieRecommendation } from './features/recommendation/services/geminiService';
@@ -60,6 +61,17 @@ const App: React.FC = () => {
 
     // A ref to prevent hashchange from firing multiple times during a single transition.
     const isTransitioningRef = useRef(false);
+
+    // --- START: NAVIGATION FIX ---
+    // This effect ensures navigation to the result screen only happens *after* the recommendation state is set.
+    // This fixes the race condition where the app would navigate before the data was ready, causing a reset.
+    useEffect(() => {
+        if (recommendation && stepRef.current !== 5) {
+            window.location.hash = STEP_HASH_MAP[5];
+        }
+    }, [recommendation]);
+    // --- END: NAVIGATION FIX ---
+
 
     const handleReset = useCallback(() => {
         setIsFading(true);
@@ -147,15 +159,14 @@ const App: React.FC = () => {
         try {
             const translatedAnswers = getTranslatedAnswer(currentAnswers);
             const result = await getMovieRecommendation(translatedAnswers, previousSuggestions, locale, preferences as UserPreferences);
-            setRecommendation(result);
+
             if (user && result.tmdbId) {
                 addHistoryItem(result, currentAnswers);
             }
             setPreviousSuggestions(prev => [...prev, result.title]);
-            window.location.hash = STEP_HASH_MAP[5]; // Navigate to result
+            setRecommendation(result); // Set state first
         } catch (err: any) {
             setError(t(err.message) || t('app.errorDefault'));
-            // On error, stay on the refine step to allow the user to try again.
             window.location.hash = STEP_HASH_MAP[4];
         } finally {
             setIsLoading(false);
@@ -168,10 +179,8 @@ const App: React.FC = () => {
         const nextStep = step + 1;
 
         if (nextStep > 4) {
-            // We've reached the end of the questions, fetch the recommendation.
             fetchRecommendation(newAnswers as UserAnswers);
         } else {
-            // Navigate to the next question step.
             window.location.hash = STEP_HASH_MAP[nextStep];
         }
     }, [answers, step, fetchRecommendation]);
@@ -187,7 +196,6 @@ const App: React.FC = () => {
         setError(null);
 
         try {
-            // Give modal time to close visually before heavy processing
             await new Promise(resolve => setTimeout(resolve, 200));
 
             const tmdbDetails = await getMovieDetailsForHistory(item.tmdbId, item.title, locale);
@@ -202,18 +210,16 @@ const App: React.FC = () => {
                 ...tmdbDetails,
             };
 
-            setRecommendation(reconstructedRec);
             setAnswers(item.userAnswers);
+            setRecommendation(reconstructedRec); // Set state first
 
-            // Navigate to the result screen
-            window.location.hash = STEP_HASH_MAP[5];
         } catch (err: any) {
             setError(t(err.message) || t('app.errorDefault'));
-            // On error, just stop loading and show the error. No navigation change.
-        } finally {
+            // Stop loading but stay on current page to show error
             setIsLoading(false);
             setLoadingMessage(undefined);
         }
+        // finally block removed to let the loading state be controlled by the error/success path
     }, [locale, t]);
 
     const handleTryAgain = () => {
@@ -232,10 +238,12 @@ const App: React.FC = () => {
                 if (recommendation) {
                     return <RecommendationScreen recommendation={recommendation} answers={answers as UserAnswers} onTryAgain={handleTryAgain} onBack={handleBack} />;
                 }
-                handleReset(); // If we are on step 5 but have no recommendation, reset.
+                // If we are on step 5 but have no recommendation (e.g., on page refresh), reset.
+                handleReset();
                 return null;
             default:
-                handleReset(); // Should not happen, but as a fallback, reset.
+                // Should not happen, but as a fallback, reset.
+                handleReset();
                 return null;
         }
     };
