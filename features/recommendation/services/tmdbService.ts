@@ -208,19 +208,3 @@ export const fetchMovieDetailsFromTMDb = async (originalTitle: string, year: num
     originalTitle: originalTitle,
   };
 };
-
-export const reFetchMovieDetails = async (tmdbId: number, originalTitle: string, newLocale: string): Promise<Partial<MovieRecommendation>> => {
-  if (!tmdbId) {
-    throw new Error('TMDb ID is missing for re-fetch.');
-  }
-
-  const [details, providers] = await Promise.all([
-    getMovieDetails(tmdbId, newLocale),
-    getWatchProviders(tmdbId, newLocale, originalTitle)
-  ]);
-
-  return {
-    ...details,
-    watchProviders: providers,
-  }
-};

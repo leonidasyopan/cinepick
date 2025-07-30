@@ -197,7 +197,7 @@ const App: React.FC = () => {
                 year: item.year,
                 posterPath: tmdbDetails.posterPath || item.posterPath,
                 tmdbId: item.tmdbId,
-                justification: item.justification,
+                justifications: item.justifications,
                 trailerSearchQuery: `${item.title} official trailer`,
                 ...tmdbDetails,
             };

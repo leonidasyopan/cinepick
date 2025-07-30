@@ -29,14 +29,22 @@ const recommendationSchema = Schema.object({
     properties: {
         title: Schema.string({ description: "The title of the movie." }),
         year: Schema.integer({ description: "The release year of the movie." }),
-        justification: Schema.string({ description: "A compelling, personalized justification explaining why this movie fits the user's criteria. Weave the user's choices into the explanation." }),
+        justifications: Schema.object({
+            description: "A compelling, personalized, but concise (2-3 sentences) justification for why this movie fits the user's criteria, provided in multiple languages. Weave the user's choices into each explanation.",
+            properties: {
+                'en-us': Schema.string({ description: "The justification written in English (US)." }),
+                'es-es': Schema.string({ description: "The justification written in Spanish (from Spain)." }),
+                'pt-br': Schema.string({ description: "The justification written in Brazilian Portuguese." }),
+            },
+            required: ["en-us", "es-es", "pt-br"]
+        }),
         streamingServices: Schema.array({
-            description: "A list of 2-3 major streaming services where the movie is likely available (e.g., 'Netflix', 'Hulu', 'Prime Video', 'Disney+', 'Max').",
+            description: "A list of 2-3 major streaming services where the movie is likely available (e.g., 'Netflix', 'Hulu', 'Prime Video', 'Disney+', 'Max'). This is a fallback.",
             items: Schema.string()
         }),
         trailerSearchQuery: Schema.string({ description: "A simple YouTube search query for the official trailer, e.g., 'Inception official trailer'." }),
     },
-    required: ["title", "year", "justification", "streamingServices", "trailerSearchQuery"]
+    required: ["title", "year", "justifications", "streamingServices", "trailerSearchQuery"]
 });
 
 export const getMovieRecommendation = async (
@@ -58,19 +66,12 @@ export const getMovieRecommendation = async (
         preferencesText += `\n- The movie's content rating (e.g., in the USA: G, PG, PG-13, R, NC-17) must be no stricter than ${preferences.ageRating}. For example, if 'PG-13' is specified, you can suggest 'G', 'PG', or 'PG-13' movies, but not 'R' or 'NC-17'.`;
     }
 
-    const languageMap: Record<string, string> = {
-        'en-us': 'English',
-        'es-es': 'Spanish (Spain)',
-        'pt-br': 'Brazilian Portuguese'
-    }
-    const languageName = languageMap[locale] || 'English';
-
-    const prompt = `
+        const prompt = `
         You are 'CinePick', a friendly and expert movie recommendation assistant.
         A user has provided their preferences for a movie night. Your task is to suggest a single, perfect, and relatively well-known movie.
-        Your entire response, especially the 'justification', MUST be in the following language: ${languageName}.
+        The user's preferences are provided in their selected language.
 
-        Here are the user's preferences, also in ${languageName}:
+        Here are the user's preferences:
         - Mood: They want to feel like ${answers.mood}.
         - Specific Vibe: They're looking for something ${answers.subMood}.
         - Occasion: It's for a '${answers.occasion}'.
@@ -81,7 +82,7 @@ export const getMovieRecommendation = async (
         Based on all these choices, provide one movie recommendation.
         ${previousSuggestionsText}
         
-        Return the response in JSON format according to the provided schema. The 'justification' field must be in ${languageName}.
+        Return the response in JSON format according to the provided schema. IMPORTANT: The 'justifications' object MUST contain the justification text translated into English (en-us), Spanish (es-es), and Brazilian Portuguese (pt-br).
     `;
 
     try {
@@ -108,7 +109,7 @@ export const getMovieRecommendation = async (
         const jsonText = response.text();
         const geminiRecommendation = JSON.parse(jsonText) as MovieRecommendation;
 
-        if (!geminiRecommendation.title || !geminiRecommendation.justification) {
+        if (!geminiRecommendation.title || !geminiRecommendation.justifications) {
             throw new Error("Received incomplete data from API.");
         }
         

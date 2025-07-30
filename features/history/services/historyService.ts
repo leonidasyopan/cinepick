@@ -14,7 +14,7 @@ export const addRecommendationToHistory = async (userId: string, recommendation:
       title: recommendation.title,
       year: recommendation.year,
       posterPath: recommendation.posterPath || '',
-      justification: recommendation.justification,
+      justifications: recommendation.justifications,
       recommendationDate: serverTimestamp(),
       watched: false,
       rating: null,

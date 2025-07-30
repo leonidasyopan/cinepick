@@ -1,4 +1,4 @@
-import type { UserAnswers } from '../recommendation/types';
+import type { UserAnswers, MovieRecommendation } from '../recommendation/types';
 
 export interface HistoryItem {
   // From recommendation
@@ -6,7 +6,7 @@ export interface HistoryItem {
   title: string;
   year: number;
   posterPath: string;
-  justification: string;
+  justifications: MovieRecommendation['justifications'];
 
   // History specific
   recommendationDate: any; // Firestore Timestamp

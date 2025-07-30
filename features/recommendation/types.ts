@@ -1,3 +1,4 @@
+
 export interface RefinementPair {
   optionA: string;
   optionB: string;
@@ -24,12 +25,16 @@ export interface WatchProvider {
   logo_path: string;
   link: string;
 }
+
+type SupportedLocales = 'en-us' | 'es-es' | 'pt-br';
+
 export interface MovieRecommendation {
   title: string;
   year: number;
-  justification: string;
+  // --- New proactive translation field ---
+  justifications: { [key in SupportedLocales]: string };
   trailerSearchQuery: string;
-  // --- New fields from TMDb ---
+  // --- Fields from TMDb ---
   tmdbId?: number;
   originalTitle?: string;
   posterPath?: string;
@@ -45,6 +50,8 @@ export interface MovieRecommendation {
   watchProviders?: WatchProvider[];
   // Fallback for original streaming services list
   streamingServices?: string[];
+  // This field is being deprecated in favor of `justifications`
+  justification?: string;
 }
 
 export type PartialUserAnswers = Partial<UserAnswers>;

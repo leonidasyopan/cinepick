@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { MovieRecommendation, UserAnswers, WatchProvider } from '../types';
-import { IMAGE_BASE_URL, reFetchMovieDetails } from '../services/tmdbService';
-import { translateText } from '../services/translationService';
+import { IMAGE_BASE_URL } from '../services/tmdbService';
 import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon, ImdbIcon, RottenTomatoesIcon } from '../../../components/icons/index';
 import { useI18n } from '../../../src/i18n/i18n';
 
@@ -51,72 +50,19 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendation; answers: UserAnswers; onTryAgain: () => void; onBack: () => void; }> = ({ recommendation, answers, onTryAgain, onBack }) => {
     const { t, locale, getTranslatedAnswer } = useI18n();
     const [displayedRec, setDisplayedRec] = useState<MovieRecommendation>(recommendation);
-    const [isUpdating, setIsUpdating] = useState(false);
 
-    const initialLocale = useRef(locale);
-    const translationCache = useRef<{ [key: string]: MovieRecommendation }>({
-        [locale]: recommendation
-    }).current;
-
-    // Effect to reset state if the parent `recommendation` prop changes (e.g., "Try Again")
+    // This effect ensures that if the parent sends a new recommendation (e.g., from "Try Again"),
+    // the component updates its internal state.
     useEffect(() => {
         setDisplayedRec(recommendation);
-        Object.keys(translationCache).forEach(key => delete translationCache[key]);
-        translationCache[initialLocale.current] = recommendation;
-    }, [recommendation, translationCache]);
+    }, [recommendation]);
 
-    // Effect to handle language changes
-    useEffect(() => {
-        // Do not run on the initial render for the initial locale
-        if (locale === initialLocale.current) return;
+    // The translation logic is now much simpler.
+    // We get the justification text for the current language directly from the recommendation object.
+    // This is instant and removes the need for slow, complex, and buggy API calls.
+    const justification = displayedRec.justifications?.[locale] || displayedRec.justifications?.['en-us'] || '';
 
-        const updateLanguage = async () => {
-            // Check cache first
-            if (translationCache[locale]) {
-                setDisplayedRec(translationCache[locale]);
-                return;
-            }
-
-            // If not in cache, fetch and translate
-            setIsUpdating(true);
-            try {
-                const { tmdbId, originalTitle, justification } = recommendation;
-
-                if (!tmdbId || !originalTitle) {
-                    throw new Error("Missing data required for translation (tmdbId or originalTitle).");
-                }
-
-                const tmdbPromise = reFetchMovieDetails(tmdbId, originalTitle, locale);
-                const justificationPromise = translateText(justification, locale);
-
-                const [newTmdbDetails, translatedJustification] = await Promise.all([
-                    tmdbPromise,
-                    justificationPromise
-                ]);
-
-                const newRecommendation: MovieRecommendation = {
-                    ...recommendation, // Base recommendation for fallback
-                    ...newTmdbDetails, // Overwrite with new TMDb data (title, synopsis, etc.)
-                    justification: translatedJustification, // Overwrite with new justification
-                };
-
-                translationCache[locale] = newRecommendation;
-                setDisplayedRec(newRecommendation);
-
-            } catch (error) {
-                console.error("Failed to update language:", error);
-                // Optionally show an error toast to the user
-            } finally {
-                setIsUpdating(false);
-            }
-        };
-
-        updateLanguage();
-
-    }, [locale, recommendation, translationCache]);
-
-
-    const { title, year, posterPath, trailerSearchQuery, imdbId, synopsis, runtime, rating, director, cast, justification, watchProviders, streamingServices } = displayedRec;
+    const { title, year, posterPath, trailerSearchQuery, imdbId, synopsis, runtime, rating, director, cast, watchProviders, streamingServices } = displayedRec;
     const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(trailerSearchQuery)}`;
     const imdbUrl = imdbId ? `https://www.imdb.com/title/${imdbId}/` : null;
     const rtUrl = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(title)}`;
@@ -136,12 +82,7 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
 
     return (
         <div className="relative w-full max-w-4xl mx-auto animate-fade-in">
-            {isUpdating && (
-                <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10 rounded-lg">
-                    <div className="w-12 h-12 border-4 border-t-4 border-t-accent border-surface rounded-full animate-spin"></div>
-                </div>
-            )}
-            <div className={`flex flex-col lg:flex-row gap-8 items-center lg:items-start transition-opacity duration-300 ${isUpdating ? 'opacity-30' : 'opacity-100'}`}>
+            <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start transition-opacity duration-300">
                 <div className="flex-shrink-0 w-60 md:w-72">
                     <img
                         src={posterUrl}
