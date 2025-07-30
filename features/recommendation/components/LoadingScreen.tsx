@@ -9,13 +9,18 @@ const StarIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+interface LoadingScreenProps {
+    message?: string;
+}
 
-const LoadingScreen: React.FC = () => {
+const LoadingScreen: React.FC<LoadingScreenProps> = ({ message }) => {
     const { t } = useI18n();
     const { movies, isLoading } = useTrendingMovies();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    const displayMessage = message || t('loadingScreen.message');
 
     const validMovies = useMemo(() => movies.filter(m => m.posterPath), [movies]);
     const postersLength = validMovies.length;
@@ -68,7 +73,7 @@ const LoadingScreen: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center gap-6 animate-fade-in">
                 <div className="w-16 h-16 border-4 border-t-4 border-t-accent border-surface rounded-full animate-spin"></div>
-                <p className="text-2xl text-text-secondary font-semibold tracking-wider">{t('loadingScreen.message')}</p>
+                <p className="text-2xl text-text-secondary font-semibold tracking-wider">{displayMessage}</p>
             </div>
         );
     }
@@ -87,7 +92,7 @@ const LoadingScreen: React.FC = () => {
 
     return (
         <div className="flex flex-col items-center justify-center w-full gap-6 animate-fade-in">
-            <p className="text-2xl text-text-secondary font-semibold tracking-wider">{t('loadingScreen.message')}</p>
+            <p className="text-2xl text-text-secondary font-semibold tracking-wider">{displayMessage}</p>
             <div
                 ref={containerRef}
                 className="relative w-full h-80 md:h-96 flex items-center justify-center overflow-hidden"

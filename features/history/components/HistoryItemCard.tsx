@@ -11,9 +11,18 @@ interface HistoryItemCardProps {
 }
 
 export const HistoryItemCard: React.FC<HistoryItemCardProps> = ({ item, onUpdate, onSelect }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const posterUrl = item.posterPath ? `${IMAGE_BASE_URL}w500${item.posterPath}` : `https://picsum.photos/seed/${encodeURIComponent(item.title)}/500/750`;
-  const recommendationDate = item.recommendationDate?.toDate ? item.recommendationDate.toLocaleDateString() : 'N/A';
+
+  // When data is read from Firestore, `recommendationDate` is a Firestore Timestamp object.
+  // This object has a `toDate()` method which returns a standard JavaScript Date object.
+  // The error occurred because the original code tried to call `.toLocaleDateString()` directly
+  // on the Timestamp object, which doesn't have that method.
+  // The fix is to call `.toDate()` first, and then call `.toLocaleDateString()` on the resulting Date object.
+  // We also pass the app's locale to ensure correct date formatting for the user.
+  const recommendationDate = item.recommendationDate?.toDate
+    ? item.recommendationDate.toDate().toLocaleDateString(locale)
+    : 'N/A';
 
   const handleWatchedToggle = () => {
     const newWatchedStatus = !item.watched;

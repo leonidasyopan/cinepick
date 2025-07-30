@@ -12,7 +12,8 @@
   "app": {
     "resetAriaLabel": "Go to homepage and start over",
     "errorDefault": "An unknown error occurred.",
-    "errorFetchingRecommendation": "Sorry, I couldn't think of a movie right now. Please try again."
+    "errorFetchingRecommendation": "Sorry, I couldn't think of a movie right now. Please try again.",
+    "errorRevisitingRecommendation": "Sorry, there was a problem loading your past pick. Please try again."
   },
   "auth": {
     "login": "Login",
@@ -62,7 +63,8 @@
     "error": "Could not determine refinement options. Please go back and try again."
   },
   "loadingScreen": {
-    "message": "Finding your perfect pick..."
+    "message": "Finding your perfect pick...",
+    "revisiting": "Loading your past pick..."
   },
   "recommendationScreen": {
     "subheading": "Your Perfect Pick For Tonight Is:",
@@ -228,7 +230,7 @@
       "tragic": {
         "solo": {
           "0": { "optionA": "Art-House Tragedy", "optionB": "Detached Visual Masterpiece", "description": "Emotional spiral vs. dreamlike metaphor." },
-          "1": { "optionA": "Foreign Language Drama", "optionB": "Minimalist Philosophy Film", "description": "Rich sorrow vs. abstract beauty." },
+          "1": { "optionA": "Foreign Language Drama", "optionB": "Minimalist Philosophy Film", "description": "Rich sorrow vs. beauty." },
           "2": { "optionA": "Mythic Tragedy", "optionB": "Existential Sci-Fi", "description": "Fate vs. absurdity." }
         },
         "friends": {

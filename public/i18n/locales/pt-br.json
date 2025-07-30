@@ -12,7 +12,8 @@
   "app": {
     "resetAriaLabel": "Ir para a página inicial e começar de novo",
     "errorDefault": "Ocorreu um erro desconhecido.",
-    "errorFetchingRecommendation": "Desculpe, não consegui pensar em um filme agora. Por favor, tente novamente."
+    "errorFetchingRecommendation": "Desculpe, não consegui pensar em um filme agora. Por favor, tente novamente.",
+    "errorRevisitingRecommendation": "Desculpe, houve um problema ao carregar sua escolha anterior. Por favor, tente novamente."
   },
   "auth": {
     "login": "Login",
@@ -62,7 +63,8 @@
     "error": "Não foi possível determinar as opções de refinamento. Por favor, volte e tente novamente."
   },
   "loadingScreen": {
-    "message": "Encontrando sua escolha perfeita..."
+    "message": "Encontrando sua escolha perfeita...",
+    "revisiting": "Carregando sua escolha anterior..."
   },
   "recommendationScreen": {
     "subheading": "Sua Escolha Perfeita Para Esta Noite É:",

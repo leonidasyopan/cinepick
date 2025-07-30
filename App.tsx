@@ -2,7 +2,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { UserAnswers, PartialUserAnswers, MovieRecommendation, UserPreferences } from './features/recommendation/types';
 import { getMovieRecommendation } from './features/recommendation/services/geminiService';
-import { reFetchMovieDetails } from './features/recommendation/services/tmdbService';
 import { RecommendationScreen } from './features/recommendation/components/RecommendationScreen';
 import MoodSelector from './features/recommendation/components/MoodSelector';
 import SubMoodStep from './features/recommendation/components/SubMoodStep';
@@ -18,6 +17,7 @@ import { UserIcon, HistoryIcon } from './components/icons';
 import { useHistory } from './features/history/HistoryContext';
 import type { HistoryItem } from './features/history/types';
 import HistoryModal from './features/history/components/HistoryModal';
+import { getMovieDetailsForHistory } from './features/history/services/tmdbHistoryService';
 
 const STEP_HASH_MAP: { [key: number]: string } = {
     1: 'mood',
@@ -49,6 +49,8 @@ const App: React.FC = () => {
     const [recommendation, setRecommendation] = useState<MovieRecommendation | null>(null);
     const [previousSuggestions, setPreviousSuggestions] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState<string | undefined>(undefined);
+    const [loadingHistoryItem, setLoadingHistoryItem] = useState<HistoryItem | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isFading, setIsFading] = useState(false);
     const [isAuthModalOpen, setAuthModalOpen] = useState(false);
@@ -151,6 +153,7 @@ const App: React.FC = () => {
 
     const fetchRecommendation = useCallback(async (currentAnswers: UserAnswers) => {
         setIsLoading(true);
+        setLoadingMessage(undefined); // Use default loading message
         setError(null);
         isProgrammaticNavigationRef.current = true;
         window.location.hash = STEP_HASH_MAP[5];
@@ -166,7 +169,7 @@ const App: React.FC = () => {
             isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[6];
         } catch (err: any) {
-            setError(err.message || t('app.errorDefault'));
+            setError(t(err.message) || t('app.errorDefault'));
             isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[1];
         } finally {
@@ -202,45 +205,57 @@ const App: React.FC = () => {
         }
     };
 
-    const handleSelectHistoryItem = useCallback(async (item: HistoryItem) => {
+    const handleSelectHistoryItem = useCallback((item: HistoryItem) => {
         setHistoryModalOpen(false);
-        setIsFading(true);
+        setLoadingHistoryItem(item);
+    }, []);
 
-        setTimeout(async () => {
+    useEffect(() => {
+        if (!loadingHistoryItem) return;
+
+        const loadItem = async () => {
+            setIsFading(true);
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            setIsLoading(true);
+            setLoadingMessage(t('loadingScreen.revisiting'));
+            setError(null);
             isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[5];
-            setIsLoading(true);
 
             try {
-                // Re-fetch details for the most up-to-date providers, etc.
-                const tmdbDetails = await reFetchMovieDetails(item.tmdbId, item.title, locale);
+                const tmdbDetails = await getMovieDetailsForHistory(loadingHistoryItem.tmdbId, loadingHistoryItem.title, locale);
 
                 const reconstructedRec: MovieRecommendation = {
-                    // Base data from history
-                    title: tmdbDetails.title || item.title, // Prefer fresh title
-                    year: item.year,
-                    posterPath: tmdbDetails.posterPath || item.posterPath,
-                    tmdbId: item.tmdbId,
-                    justification: item.justification,
-                    trailerSearchQuery: `${item.title} official trailer`, // Reconstruct a sensible default
-                    // Fresh data from TMDb
+                    title: tmdbDetails.title || loadingHistoryItem.title,
+                    year: loadingHistoryItem.year,
+                    posterPath: tmdbDetails.posterPath || loadingHistoryItem.posterPath,
+                    tmdbId: loadingHistoryItem.tmdbId,
+                    justification: loadingHistoryItem.justification,
+                    trailerSearchQuery: `${loadingHistoryItem.title} official trailer`,
                     ...tmdbDetails,
                 };
 
                 setRecommendation(reconstructedRec);
-                setAnswers(item.userAnswers);
+                setAnswers(loadingHistoryItem.userAnswers);
 
                 isProgrammaticNavigationRef.current = true;
                 window.location.hash = STEP_HASH_MAP[6];
             } catch (err: any) {
-                setError(err.message || t('app.errorDefault'));
+                setError(t(err.message) || t('app.errorDefault'));
                 isProgrammaticNavigationRef.current = true;
                 window.location.hash = STEP_HASH_MAP[1];
             } finally {
                 setIsLoading(false);
+                setLoadingMessage(undefined);
+                setLoadingHistoryItem(null);
+                // The fade in is handled by the hash change logic
             }
-        }, 300);
-    }, [locale, t]);
+        };
+
+        loadItem();
+    }, [loadingHistoryItem, locale, t]);
+
 
     const renderStep = () => {
         switch (step) {
@@ -248,7 +263,7 @@ const App: React.FC = () => {
             case 2: return answers.mood ? <SubMoodStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen />;
             case 3: return answers.subMood ? <OccasionStep onNext={handleNext} onBack={handleBack} /> : <LoadingScreen />;
             case 4: return answers.occasion ? <RefinementStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen />;
-            case 5: return <LoadingScreen />;
+            case 5: return <LoadingScreen message={loadingMessage} />;
             case 6: return recommendation ? <RecommendationScreen recommendation={recommendation} answers={answers as UserAnswers} onTryAgain={handleTryAgain} onBack={handleBackFromRecs} /> : <LoadingScreen />;
             default:
                 return <MoodSelector onSelect={handleNext} />;

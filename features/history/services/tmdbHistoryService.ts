@@ -1,7 +1,6 @@
 
-
-import type { MovieRecommendation, WatchProvider } from '../types';
-import { getProviderSearchLink } from './providerLinkService';
+import type { MovieRecommendation, WatchProvider } from '../../recommendation/types';
+import { getProviderSearchLink } from '../../recommendation/services/providerLinkService';
 
 // Check for both API key and access token
 if (!import.meta.env.VITE_TMDB_API_KEY) {
@@ -25,12 +24,6 @@ const formatLocaleForTMDb = (locale: string): string => {
   }
   return 'en-US'; // fallback
 };
-
-interface TmdbMovieSearchResult {
-  id: number;
-  title: string;
-  release_date: string;
-}
 
 interface TmdbMovieDetails {
   id: number;
@@ -61,40 +54,6 @@ interface TmdbWatchProviderResult {
   }
 }
 
-const searchMovie = async (title: string, year: number): Promise<number | null> => {
-  const url = new URL(`${BASE_URL}/search/movie`);
-
-  url.searchParams.append('query', title);
-  if (year) {
-    url.searchParams.append('year', year.toString());
-  }
-  url.searchParams.append('include_adult', 'false');
-
-  const options = {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${READ_ACCESS_TOKEN}`,
-      'accept': 'application/json'
-    }
-  };
-
-  try {
-    const response = await fetch(url.toString(), options);
-    if (!response.ok) return null;
-    const data = await response.json();
-    const results: TmdbMovieSearchResult[] = data.results;
-
-    // Find the best match, preferring exact title match
-    const exactMatch = results.find(m => m.title.toLowerCase() === title.toLowerCase());
-    if (exactMatch) return exactMatch.id;
-
-    // Fallback to the first result if it exists
-    return results.length > 0 ? results[0].id : null;
-  } catch (error) {
-    console.error("TMDb search failed:", error);
-    return null;
-  }
-};
 
 const getMovieDetails = async (movieId: number, locale: string): Promise<Partial<MovieRecommendation>> => {
   const url = new URL(`${BASE_URL}/movie/${movieId}`);
@@ -114,7 +73,8 @@ const getMovieDetails = async (movieId: number, locale: string): Promise<Partial
   try {
     const response = await fetch(url.toString(), options);
     if (!response.ok) {
-      throw new Error(`TMDb API error for getMovieDetails! Status: ${response.status}`);
+      // Throw an error with a specific message key for translation
+      throw new Error('app.errorRevisitingRecommendation');
     }
     const data: TmdbMovieDetails = await response.json();
 
@@ -132,8 +92,9 @@ const getMovieDetails = async (movieId: number, locale: string): Promise<Partial
       imdbId: data.external_ids.imdb_id
     };
   } catch (error) {
-    console.error("TMDb getMovieDetails failed:", error);
-    throw error; // Re-throw the error so the calling function can catch it.
+    console.error("TMDb getMovieDetails for history failed:", error);
+    // Re-throw the error so it can be caught by the calling function
+    throw error;
   }
 };
 
@@ -182,45 +143,29 @@ const getWatchProviders = async (movieId: number, locale: string, movieTitle: st
     return Array.from(uniqueProviders.values());
 
   } catch (error) {
-    console.error("TMDb getWatchProviders failed:", error);
-    return [];
+    console.error("TMDb getWatchProviders for history failed:", error);
+    return []; // Return empty array on failure, not a critical error
   }
 };
 
-export const fetchMovieDetailsFromTMDb = async (originalTitle: string, year: number, locale: string): Promise<Partial<MovieRecommendation>> => {
-  // Search with the original title for the best match.
-  const movieId = await searchMovie(originalTitle, year);
-  if (!movieId) {
-    // Throw an error if the movie is not found, so the caller can handle it.
-    throw new Error(`Movie "${originalTitle}" (${year}) not found on TMDb.`);
-  }
-
-  // Then fetch details and providers using the found ID and the desired locale.
-  const [details, providers] = await Promise.all([
-    getMovieDetails(movieId, locale),
-    getWatchProviders(movieId, locale, originalTitle)
-  ]);
-
-  return {
-    ...details,
-    watchProviders: providers,
-    tmdbId: movieId,
-    originalTitle: originalTitle,
-  };
-};
-
-export const reFetchMovieDetails = async (tmdbId: number, originalTitle: string, newLocale: string): Promise<Partial<MovieRecommendation>> => {
+export const getMovieDetailsForHistory = async (tmdbId: number, originalTitle: string, newLocale: string): Promise<Partial<MovieRecommendation>> => {
   if (!tmdbId) {
-    throw new Error('TMDb ID is missing for re-fetch.');
+    throw new Error('app.errorRevisitingRecommendation');
   }
 
-  const [details, providers] = await Promise.all([
-    getMovieDetails(tmdbId, newLocale),
-    getWatchProviders(tmdbId, newLocale, originalTitle)
-  ]);
+  try {
+    const [details, providers] = await Promise.all([
+      getMovieDetails(tmdbId, newLocale),
+      getWatchProviders(tmdbId, newLocale, originalTitle)
+    ]);
 
-  return {
-    ...details,
-    watchProviders: providers,
+    return {
+      ...details,
+      watchProviders: providers,
+    };
+  } catch (error) {
+    // Log the error and re-throw it to be handled by the UI
+    console.error(`Failed to get details for history item ${tmdbId}:`, error);
+    throw error;
   }
 };

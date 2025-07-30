@@ -12,7 +12,8 @@
   "app": {
     "resetAriaLabel": "Ir a la página de inicio y empezar de nuevo",
     "errorDefault": "Ocurrió un error desconocido.",
-    "errorFetchingRecommendation": "Lo siento, no pude encontrar una película en este momento. Por favor, inténtalo de nuevo."
+    "errorFetchingRecommendation": "Lo siento, no pude encontrar una película en este momento. Por favor, inténtalo de nuevo.",
+    "errorRevisitingRecommendation": "Lo siento, hubo un problema al cargar tu elección pasada. Por favor, inténtalo de nuevo."
   },
   "auth": {
     "login": "Iniciar Sesión",
@@ -62,7 +63,8 @@
     "error": "No se pudieron determinar las opciones de refinamiento. Por favor, vuelve atrás e inténtalo de nuevo."
   },
   "loadingScreen": {
-    "message": "Encontrando tu película perfecta..."
+    "message": "Encontrando tu película perfecta...",
+    "revisiting": "Cargando tu elección pasada..."
   },
   "recommendationScreen": {
     "subheading": "Tu Elección Perfecta Para Esta Noche Es:",
