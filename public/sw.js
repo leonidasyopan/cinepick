@@ -1,5 +1,7 @@
 
-const CACHE_NAME = 'cinepick-cache-v1';
+const CACHE_NAME = 'cinepick-cache-v2'; // Bump version to force update
+const API_CACHE_NAME = 'cinepick-api-cache-v2'; // A separate cache for API data
+
 // These are the files for the app shell.
 const APP_SHELL_URLS = [
   '/',
@@ -35,7 +37,8 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          // If a cache is not one of the current, valid caches, delete it.
+          if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
             console.log('Service Worker: Deleting old cache', cacheName);
             return caches.delete(cacheName);
           }
@@ -62,14 +65,37 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // For external CDNs and APIs, always use the network and do not cache.
+  // Strategy: Stale-While-Revalidate for TMDb API and images.
+  // This serves content from cache immediately for speed, then updates the cache
+  // in the background with a fresh network request for future visits.
+  if (url.hostname === 'api.themoviedb.org' || url.hostname === 'image.tmdb.org') {
+    event.respondWith(
+      caches.open(API_CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          const fetchPromise = fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(error => {
+            console.error('TMDb fetch failed:', error);
+            // If network fails, we still have the cachedResponse (if it existed)
+          });
+
+          // Return cached response if it exists, otherwise wait for the network.
+          return cachedResponse || fetchPromise;
+        });
+      })
+    );
+    return; // Exit after handling the TMDb request.
+  }
+
+  // For other external CDNs, always use the network and do not cache.
   const isExternalResource =
     url.hostname === 'cdn.tailwindcss.com' ||
     url.hostname === 'cdn.jsdelivr.net' ||
     url.hostname === 'ipapi.co' ||
     url.hostname === 'picsum.photos' ||
-    url.hostname === 'api.themoviedb.org' ||
-    url.hostname === 'image.tmdb.org' ||
     url.hostname.endsWith('googleapis.com');
 
   if (isExternalResource) {
@@ -77,7 +103,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Use a "Cache, falling back to network" strategy for local resources
+  // Use a "Cache, falling back to network" strategy for local app shell resources.
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cachedResponse) => {

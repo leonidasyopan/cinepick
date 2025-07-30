@@ -4,11 +4,11 @@
 const providerSearchLinks: Record<string, string> = {
   'netflix': 'https://www.netflix.com/search?q={query}',
   'prime video': 'https://www.primevideo.com/search/ref=atv_nb_sr?phrase={query}&ie=UTF8',
-  'disney+': 'https://www.disneyplus.com/search?q={query}',
+  'disney plus': 'https://www.disneyplus.com/search?q={query}',
   'hulu': 'https://www.hulu.com/search?q={query}',
   'max': 'https://play.max.com/search?q={query}',
   'apple tv': 'https://tv.apple.com/us/search?term={query}',
-  'paramount+': 'https://www.paramountplus.com/search/?q={query}',
+  'paramount plus': 'https://www.paramountplus.com/search/?q={query}',
   'peacock': 'https://www.peacocktv.com/watch/search?q={query}',
   'youtube': 'https://www.youtube.com/results?search_query={query}+movie',
 };
