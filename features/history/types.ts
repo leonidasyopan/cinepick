@@ -6,6 +6,7 @@ export interface HistoryItem {
   title: string;
   year: number;
   posterPath: string;
+  justification: string;
 
   // History specific
   recommendationDate: any; // Firestore Timestamp

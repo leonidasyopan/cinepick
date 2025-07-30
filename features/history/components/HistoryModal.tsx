@@ -3,19 +3,21 @@ import Modal from '../../../components/Modal';
 import { useHistory } from '../HistoryContext';
 import { useI18n } from '../../../src/i18n/i18n';
 import { HistoryItemCard } from './HistoryItemCard';
+import type { HistoryItem } from '../types';
 
 interface HistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSelectItem: (item: HistoryItem) => void;
 }
 
-const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose }) => {
+const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectItem }) => {
   const { t } = useI18n();
   const { history, loading, updateHistoryItem } = useHistory();
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('auth.historyTitle')}>
-      <div className="max-h-[60vh] overflow-y-auto pr-2 flex flex-col gap-3">
+      <div className="max-h-[60vh] overflow-y-auto pr-2 -mr-4 flex flex-col gap-3">
         {loading && (
           <div className="flex justify-center items-center h-40">
             <div className="w-8 h-8 border-2 rounded-full border-surface border-t-accent animate-spin" />
@@ -26,7 +28,12 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose }) => {
         )}
         {!loading && history.length > 0 && (
           history.map(item => (
-            <HistoryItemCard key={item.tmdbId} item={item} onUpdate={updateHistoryItem} />
+            <HistoryItemCard
+              key={item.tmdbId}
+              item={item}
+              onUpdate={updateHistoryItem}
+              onSelect={onSelectItem}
+            />
           ))
         )}
       </div>

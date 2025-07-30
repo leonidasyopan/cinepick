@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { UserAnswers, PartialUserAnswers, MovieRecommendation, UserPreferences } from './features/recommendation/types';
 import { getMovieRecommendation } from './features/recommendation/services/geminiService';
+import { reFetchMovieDetails } from './features/recommendation/services/tmdbService';
 import { RecommendationScreen } from './features/recommendation/components/RecommendationScreen';
 import MoodSelector from './features/recommendation/components/MoodSelector';
 import SubMoodStep from './features/recommendation/components/SubMoodStep';
@@ -15,6 +16,7 @@ import AuthModal from './features/auth/components/AuthModal';
 import ProfileModal from './features/auth/components/ProfileModal';
 import { UserIcon, HistoryIcon } from './components/icons';
 import { useHistory } from './features/history/HistoryContext';
+import type { HistoryItem } from './features/history/types';
 import HistoryModal from './features/history/components/HistoryModal';
 
 const STEP_HASH_MAP: { [key: number]: string } = {
@@ -200,6 +202,46 @@ const App: React.FC = () => {
         }
     };
 
+    const handleSelectHistoryItem = useCallback(async (item: HistoryItem) => {
+        setHistoryModalOpen(false);
+        setIsFading(true);
+
+        setTimeout(async () => {
+            isProgrammaticNavigationRef.current = true;
+            window.location.hash = STEP_HASH_MAP[5];
+            setIsLoading(true);
+
+            try {
+                // Re-fetch details for the most up-to-date providers, etc.
+                const tmdbDetails = await reFetchMovieDetails(item.tmdbId, item.title, locale);
+
+                const reconstructedRec: MovieRecommendation = {
+                    // Base data from history
+                    title: tmdbDetails.title || item.title, // Prefer fresh title
+                    year: item.year,
+                    posterPath: tmdbDetails.posterPath || item.posterPath,
+                    tmdbId: item.tmdbId,
+                    justification: item.justification,
+                    trailerSearchQuery: `${item.title} official trailer`, // Reconstruct a sensible default
+                    // Fresh data from TMDb
+                    ...tmdbDetails,
+                };
+
+                setRecommendation(reconstructedRec);
+                setAnswers(item.userAnswers);
+
+                isProgrammaticNavigationRef.current = true;
+                window.location.hash = STEP_HASH_MAP[6];
+            } catch (err: any) {
+                setError(err.message || t('app.errorDefault'));
+                isProgrammaticNavigationRef.current = true;
+                window.location.hash = STEP_HASH_MAP[1];
+            } finally {
+                setIsLoading(false);
+            }
+        }, 300);
+    }, [locale, t]);
+
     const renderStep = () => {
         switch (step) {
             case 1: return <MoodSelector onSelect={handleNext} />;
@@ -269,7 +311,7 @@ const App: React.FC = () => {
 
             {isFirebaseEnabled && <AuthModal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} />}
             {isFirebaseEnabled && <ProfileModal isOpen={isProfileModalOpen} onClose={() => setProfileModalOpen(false)} />}
-            {isFirebaseEnabled && <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setHistoryModalOpen(false)} />}
+            {isFirebaseEnabled && <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setHistoryModalOpen(false)} onSelectItem={handleSelectHistoryItem} />}
         </>
     );
 };

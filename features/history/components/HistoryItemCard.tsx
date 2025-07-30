@@ -7,12 +7,13 @@ import { useI18n } from '../../../src/i18n/i18n';
 interface HistoryItemCardProps {
   item: HistoryItem;
   onUpdate: (tmdbId: number, updates: Partial<Pick<HistoryItem, 'watched' | 'rating'>>) => void;
+  onSelect: (item: HistoryItem) => void;
 }
 
-export const HistoryItemCard: React.FC<HistoryItemCardProps> = ({ item, onUpdate }) => {
+export const HistoryItemCard: React.FC<HistoryItemCardProps> = ({ item, onUpdate, onSelect }) => {
   const { t } = useI18n();
   const posterUrl = item.posterPath ? `${IMAGE_BASE_URL}w500${item.posterPath}` : `https://picsum.photos/seed/${encodeURIComponent(item.title)}/500/750`;
-  const recommendationDate = item.recommendationDate?.toDate ? item.recommendationDate.toDate().toLocaleDateString() : 'N/A';
+  const recommendationDate = item.recommendationDate?.toDate ? item.recommendationDate.toLocaleDateString() : 'N/A';
 
   const handleWatchedToggle = () => {
     const newWatchedStatus = !item.watched;
@@ -34,10 +35,14 @@ export const HistoryItemCard: React.FC<HistoryItemCardProps> = ({ item, onUpdate
 
   return (
     <div className="flex gap-4 p-3 bg-primary/50 rounded-lg w-full">
-      <img src={posterUrl} alt={item.title} className="w-20 h-auto object-cover rounded-md" />
+      <button onClick={() => onSelect(item)} className="flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-accent rounded-md">
+        <img src={posterUrl} alt={item.title} className="w-20 h-auto object-cover rounded-md" />
+      </button>
       <div className="flex-grow flex flex-col justify-between">
         <div>
-          <h4 className="font-bold text-text-primary">{item.title} ({item.year})</h4>
+          <button onClick={() => onSelect(item)} className="text-left focus:outline-none">
+            <h4 className="font-bold text-text-primary hover:text-accent transition-colors focus:underline">{item.title} ({item.year})</h4>
+          </button>
           <p className="text-xs text-text-secondary">{t('auth.historyRecommendedOn', { date: recommendationDate })}</p>
         </div>
         <div className="flex items-center gap-4 mt-2">

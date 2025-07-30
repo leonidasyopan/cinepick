@@ -46,7 +46,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
     >
       <div
         ref={modalRef}
-        className="relative bg-surface rounded-xl shadow-2xl w-full max-w-md m-4 p-6 md:p-8 animate-fade-in"
+        className="relative bg-surface rounded-xl shadow-2xl w-full max-w-md lg:max-w-2xl m-4 p-6 md:p-8 animate-fade-in"
         onClick={(e) => e.stopPropagation()}
         tabIndex={-1}
       >

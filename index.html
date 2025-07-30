@@ -47,6 +47,34 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
+
+    /* Custom Scrollbar Styles */
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0d1117;
+      /* background */
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: #21262d;
+      /* primary */
+      border-radius: 20px;
+      border: 3px solid #0d1117;
+      /* background */
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #8b949e;
+      /* text-secondary */
+    }
+
+    ::-webkit-scrollbar-thumb:active {
+      background-color: #FCA311;
+      /* accent */
+    }
   </style>
   <script>
     // Make environment variables available to the app. This approach is used
@@ -54,7 +82,6 @@
     // these would be handled by a build process or environment configuration.
     window.process = window.process || {};
     window.process.env = window.process.env || {};
-
   </script>
   <script type="importmap">
 {
