@@ -5,9 +5,10 @@ interface ModalProps {
     onClose: () => void;
     children: ReactNode;
     title: string;
+    sizeClass?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, sizeClass = 'max-w-md' }) => {
     const modalRef = useRef<HTMLDivElement>(null);
     const lastFocusedElementRef = useRef<HTMLElement | null>(null);
 
@@ -46,7 +47,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
         >
             <div
                 ref={modalRef}
-                className="relative bg-surface rounded-xl shadow-2xl w-full max-w-md m-4 p-6 md:p-8 animate-fade-in"
+                className={`relative bg-surface rounded-xl shadow-2xl w-full ${sizeClass} m-4 p-6 md:p-8 animate-fade-in`}
                 onClick={(e) => e.stopPropagation()}
                 tabIndex={-1}
             >
