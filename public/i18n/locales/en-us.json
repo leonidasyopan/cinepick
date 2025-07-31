@@ -34,6 +34,10 @@
     "ratings": {
       "any": "Any"
     },
+    "historyTitle": "Recommendation History",
+    "historyWatched": "Watched",
+    "historyRecommendedOn": "Recommended on {date}",
+    "historyEmpty": "You have no recommendation history yet. Find a movie to get started!",
     "error": {
       "emailInUse": "This email is already in use.",
       "weakPassword": "Password should be at least 6 characters.",

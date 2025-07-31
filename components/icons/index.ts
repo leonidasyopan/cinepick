@@ -17,3 +17,6 @@ export * from './RottenTomatoesIcon';
 export * from './UserIcon';
 export * from './UsersIcon';
 export * from './WonderIcon';
+export * from './HistoryIcon';
+export * from './ThumbsUpIcon';
+export * from './ThumbsDownIcon';
