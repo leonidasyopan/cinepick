@@ -17,6 +17,13 @@ import ProfileModal from './features/auth/components/ProfileModal';
 import { UserIcon, HistoryIcon } from './components/icons';
 import { useHistory } from './features/history/HistoryContext';
 import HistoryModal from './features/history/components/HistoryModal';
+import SharedRecommendationPage from './features/sharing/components/SharedRecommendationPage';
+
+
+type AppRoute =
+    | { page: 'main'; step: number }
+    | { page: 'share'; id: string };
+
 
 const STEP_HASH_MAP: { [key: number]: string } = {
     1: 'mood',
@@ -30,20 +37,35 @@ const STEP_HASH_MAP: { [key: number]: string } = {
 const HASH_STEP_MAP: { [key: string]: number } = Object.entries(STEP_HASH_MAP)
     .reduce((acc, [key, value]) => ({ ...acc, [value]: parseInt(key, 10) }), {});
 
-const getStepFromHash = () => HASH_STEP_MAP[window.location.hash.substring(1)] || 1;
+
+const getRouteFromHash = (): AppRoute => {
+    const hash = window.location.hash.substring(1); // remove #
+    if (!hash) return { page: 'main', step: 1 };
+
+    // e.g., ['', 'share', 'xyz123'] or ['', 'mood']
+    const parts = hash.split('/').filter(p => p);
+
+    if (parts[0] === 'share' && parts[1]) {
+        return { page: 'share', id: parts[1] };
+    }
+
+    const step = HASH_STEP_MAP[parts[0]] || 1;
+    return { page: 'main', step };
+};
+
 
 // This logic runs BEFORE the first render, during component initialization.
-const initialStep = getStepFromHash();
+const initialRoute = getRouteFromHash();
 // On a fresh load, the application state is always empty.
 // Any step greater than 1 is therefore invalid.
-const isInitialStateSufficient = initialStep <= 1;
+const isInitialMainFlowStateSufficient = initialRoute.page !== 'main' || initialRoute.step <= 1;
 
 const App: React.FC = () => {
     const { t, locale, getTranslatedAnswer } = useI18n();
     const { user, loading: authLoading, preferences, isFirebaseEnabled } = useAuth();
     const { addHistoryItem } = useHistory();
 
-    const [step, setStep] = useState(isInitialStateSufficient ? initialStep : 1);
+    const [route, setRoute] = useState<AppRoute>(isInitialMainFlowStateSufficient ? initialRoute : { page: 'main', step: 1 });
     const [answers, setAnswers] = useState<PartialUserAnswers>({});
     const [recommendation, setRecommendation] = useState<MovieRecommendation | null>(null);
     const [previousSuggestions, setPreviousSuggestions] = useState<string[]>([]);
@@ -60,8 +82,8 @@ const App: React.FC = () => {
     recommendationRef.current = recommendation;
     const isLoadingRef = useRef(isLoading);
     isLoadingRef.current = isLoading;
-    const stepRef = useRef(step);
-    stepRef.current = step;
+    const routeRef = useRef(route);
+    routeRef.current = route;
     const isTransitioningRef = useRef(false);
     const isProgrammaticNavigationRef = useRef(false);
 
@@ -69,7 +91,7 @@ const App: React.FC = () => {
     const handleReset = useCallback(() => {
         setIsFading(true);
         setTimeout(() => {
-            setStep(1);
+            setRoute({ page: 'main', step: 1 });
             setAnswers({});
             setRecommendation(null);
             setPreviousSuggestions([]);
@@ -82,62 +104,70 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (!isInitialStateSufficient) {
+        if (!isInitialMainFlowStateSufficient) {
             isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[1];
         }
 
         const handleHashChange = () => {
             const wasProgrammatic = isProgrammaticNavigationRef.current;
-            isProgrammaticNavigationRef.current = false; 
-    
+            isProgrammaticNavigationRef.current = false;
+
             if (isTransitioningRef.current) return;
-    
-            const newStep = getStepFromHash();
-    
+
+            const newRoute = getRouteFromHash();
+
+            // No need to do state checks for shared page as it's self-contained.
+            if (newRoute.page === 'share') {
+                setRoute(newRoute);
+                return;
+            }
+
+            // --- Logic for main flow ---
             if (!wasProgrammatic) {
                 const isStateSufficientForStep = (targetStep: number) => {
                     const currentAnswers = answersRef.current;
                     const currentRecommendation = recommendationRef.current;
                     const currentIsLoading = isLoadingRef.current;
-    
+
                     if (targetStep <= 1) return true;
                     if (targetStep === 2) return !!currentAnswers.mood;
                     if (targetStep === 3) return !!currentAnswers.mood && !!currentAnswers.subMood;
                     if (targetStep === 4) return !!currentAnswers.mood && !!currentAnswers.subMood && !!currentAnswers.occasion;
                     if (targetStep === 5) return currentIsLoading;
                     if (targetStep === 6) return !!currentRecommendation;
-                    
+
                     return false;
                 };
-    
-                if (!isStateSufficientForStep(newStep)) {
+
+                if (!isStateSufficientForStep(newRoute.step)) {
                     window.location.hash = STEP_HASH_MAP[1];
-                    return; 
+                    // The hash change will trigger this handler again, so we just return
+                    return;
                 }
             }
-    
-            if (newStep === stepRef.current) return;
-    
+
+            if (routeRef.current.page === 'main' && newRoute.step === routeRef.current.step) return;
+
             isTransitioningRef.current = true;
             setIsFading(true);
-    
+
             setTimeout(() => {
-                if (newStep < stepRef.current) {
+                if (routeRef.current.page === 'main' && newRoute.step < routeRef.current.step) {
                     setAnswers(currentAnswers => {
                         const newAnswers: PartialUserAnswers = { ...currentAnswers };
-                        if (newStep < 4) delete newAnswers.refinements;
-                        if (newStep < 3) delete newAnswers.occasion;
-                        if (newStep < 2) delete newAnswers.subMood;
+                        if (newRoute.step < 4) delete newAnswers.refinements;
+                        if (newRoute.step < 3) delete newAnswers.occasion;
+                        if (newRoute.step < 2) delete newAnswers.subMood;
                         return newAnswers;
                     });
                 }
-                
-                if (stepRef.current === 6 && newStep !== 6) {
+
+                if (routeRef.current.page === 'main' && routeRef.current.step === 6 && newRoute.step !== 6) {
                     setRecommendation(null);
                 }
-    
-                setStep(newStep);
+
+                setRoute(newRoute);
                 setIsFading(false);
                 isTransitioningRef.current = false;
             }, 300);
@@ -145,7 +175,7 @@ const App: React.FC = () => {
 
         window.addEventListener('hashchange', handleHashChange);
         return () => window.removeEventListener('hashchange', handleHashChange);
-    }, []); 
+    }, []);
 
 
     const fetchRecommendation = useCallback(async (currentAnswers: UserAnswers) => {
@@ -176,7 +206,9 @@ const App: React.FC = () => {
     const handleNext = useCallback((data: PartialUserAnswers) => {
         const newAnswers = { ...answers, ...data };
         setAnswers(newAnswers);
-        const nextStep = step + 1;
+
+        if (route.page !== 'main') return;
+        const nextStep = route.step + 1;
 
         if (nextStep > 4) {
             fetchRecommendation(newAnswers as UserAnswers);
@@ -184,8 +216,8 @@ const App: React.FC = () => {
             isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[nextStep];
         }
-    }, [answers, step, fetchRecommendation]);
-    
+    }, [answers, route, fetchRecommendation]);
+
     const handleBack = () => {
         window.history.back();
     };
@@ -201,16 +233,29 @@ const App: React.FC = () => {
         }
     };
 
-    const renderStep = () => {
+    const renderMainFlow = (step: number) => {
         switch (step) {
             case 1: return <MoodSelector onSelect={handleNext} />;
-            case 2: return answers.mood ? <SubMoodStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen/>;
-            case 3: return answers.subMood ? <OccasionStep onNext={handleNext} onBack={handleBack} /> : <LoadingScreen/>;
-            case 4: return answers.occasion ? <RefinementStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen/>;
+            case 2: return answers.mood ? <SubMoodStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen />;
+            case 3: return answers.subMood ? <OccasionStep onNext={handleNext} onBack={handleBack} /> : <LoadingScreen />;
+            case 4: return answers.occasion ? <RefinementStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen />;
             case 5: return <LoadingScreen />;
             case 6: return recommendation ? <RecommendationScreen recommendation={recommendation} answers={answers as UserAnswers} onTryAgain={handleTryAgain} onBack={handleBackFromRecs} /> : <LoadingScreen />;
             default:
                 return <MoodSelector onSelect={handleNext} />;
+        }
+    };
+
+    const renderPage = () => {
+        switch (route.page) {
+            case 'share':
+                return <SharedRecommendationPage recommendationId={route.id} />;
+            case 'main':
+                return renderMainFlow(route.step);
+            default:
+                // This should not happen, but as a fallback, go to the start
+                handleReset();
+                return <LoadingScreen />;
         }
     };
 
@@ -223,14 +268,14 @@ const App: React.FC = () => {
 
         if (user) {
             return (
-                 <>
+                <>
                     <button onClick={() => setHistoryModalOpen(true)} className="p-1 rounded-full hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent" aria-label={t('auth.historyTitle')}>
-                        <div className="w-6 h-6 text-text-primary"><HistoryIcon/></div>
+                        <div className="w-6 h-6 text-text-primary"><HistoryIcon /></div>
                     </button>
                     <button onClick={() => setProfileModalOpen(true)} className="p-1 rounded-full hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent" aria-label={t('auth.profileTitle')}>
-                        <div className="w-6 h-6 text-text-primary"><UserIcon/></div>
+                        <div className="w-6 h-6 text-text-primary"><UserIcon /></div>
                     </button>
-                 </>
+                </>
             )
         }
 
@@ -257,17 +302,17 @@ const App: React.FC = () => {
                         {renderAuthSection()}
                     </div>
                 </header>
-                
+
                 {error && (
                     <div className="absolute top-24 bg-red-500/80 text-white p-3 rounded-lg animate-fade-in mb-4 z-20">
                         {error}
                     </div>
                 )}
                 <div className={`transition-opacity duration-300 ease-in-out w-full mt-20 sm:mt-0 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
-                    {renderStep()}
+                    {renderPage()}
                 </div>
             </main>
-            
+
             {isFirebaseEnabled && <AuthModal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} />}
             {isFirebaseEnabled && <ProfileModal isOpen={isProfileModalOpen} onClose={() => setProfileModalOpen(false)} />}
             {isFirebaseEnabled && <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setHistoryModalOpen(false)} />}

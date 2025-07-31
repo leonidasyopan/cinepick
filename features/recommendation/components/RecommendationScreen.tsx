@@ -3,8 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { MovieRecommendation, UserAnswers, WatchProvider } from '../types';
 import { IMAGE_BASE_URL, reFetchMovieDetails } from '../services/tmdbService';
 import { translateText } from '../services/translationService';
-import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon, ImdbIcon, RottenTomatoesIcon } from '../../../components/icons/index';
+import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon, ImdbIcon, RottenTomatoesIcon, ShareIcon } from '../../../components/icons/index';
 import { useI18n } from '../../../src/i18n/i18n';
+import { useAuth } from '../../auth/AuthContext';
+import { createSharedRecommendation } from '../../sharing/services/sharingService';
 
 const getStreamingIcon = (serviceName: string) => {
     const s = serviceName.toLowerCase();
@@ -50,8 +52,14 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 
 export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendation; answers: UserAnswers; onTryAgain: () => void; onBack: () => void; }> = ({ recommendation, answers, onTryAgain, onBack }) => {
     const { t, locale, getTranslatedAnswer } = useI18n();
+    const { user, isFirebaseEnabled } = useAuth();
     const [displayedRec, setDisplayedRec] = useState<MovieRecommendation>(recommendation);
     const [isUpdating, setIsUpdating] = useState(false);
+
+    const [isSharing, setIsSharing] = useState(false);
+    const [shareUrl, setShareUrl] = useState<string | null>(null);
+    const [shareConfirmation, setShareConfirmation] = useState('');
+    const [shareError, setShareError] = useState('');
 
     const initialLocale = useRef(locale);
     const translationCache = useRef<{ [key: string]: MovieRecommendation }>({
@@ -61,6 +69,9 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
     // Effect to reset state if the parent `recommendation` prop changes (e.g., "Try Again")
     useEffect(() => {
         setDisplayedRec(recommendation);
+        setShareUrl(null); // Reset share URL for new recommendation
+        setShareConfirmation('');
+        setShareError('');
         Object.keys(translationCache).forEach(key => delete translationCache[key]);
         translationCache[initialLocale.current] = recommendation;
     }, [recommendation, translationCache]);
@@ -133,6 +144,46 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
     const posterUrl = posterPath
         ? `${IMAGE_BASE_URL}w500${posterPath}`
         : `https://picsum.photos/seed/${encodeURIComponent(title)}/500/750`;
+
+    const handleShare = async () => {
+        setIsSharing(true);
+        setShareError('');
+        setShareConfirmation('');
+
+        let urlToShare = shareUrl;
+
+        try {
+            // Create the link if it doesn't exist yet
+            if (!urlToShare) {
+                const recommendationData = { recommendation: displayedRec, userAnswers: answers };
+                const newId = await createSharedRecommendation(recommendationData);
+                urlToShare = `${window.location.origin}${window.location.pathname}#/share/${newId}`;
+                setShareUrl(urlToShare);
+            }
+
+            const shareData = {
+                title: t('share.title', { movie: title }),
+                text: justification,
+                url: urlToShare,
+            };
+
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(urlToShare!);
+                setShareConfirmation(t('share.linkCopied'));
+                setTimeout(() => setShareConfirmation(''), 2500);
+            }
+        } catch (error: any) {
+            if (error.name !== 'AbortError') { // User cancelling share is not an error
+                console.error("Sharing failed", error);
+                setShareError(t('share.error'));
+                setTimeout(() => setShareError(''), 2500);
+            }
+        } finally {
+            setIsSharing(false);
+        }
+    };
 
     return (
         <div className="relative w-full max-w-4xl mx-auto animate-fade-in">
@@ -222,6 +273,20 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                         >
                             {t('recommendationScreen.tryAgainButton')}
                         </button>
+                        {isFirebaseEnabled && user && (
+                            <div className="relative flex items-center justify-center">
+                                <button
+                                    onClick={handleShare}
+                                    disabled={isSharing}
+                                    className="bg-primary/80 hover:bg-primary text-text-primary font-bold p-3 rounded-full transition-all duration-300 disabled:opacity-50"
+                                    aria-label={t('share.buttonLabel')}
+                                >
+                                    {isSharing ? <div className="w-6 h-6 border-2 rounded-full border-text-secondary border-t-accent animate-spin" /> : <ShareIcon className="w-6 h-6" />}
+                                </button>
+                                {shareConfirmation && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareConfirmation}</span>}
+                                {shareError && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareError}</span>}
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={onBack}
