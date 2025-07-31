@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { UserAnswers, PartialUserAnswers, MovieRecommendation, UserPreferences } from './features/recommendation/types';
 import { getMovieRecommendation } from './features/recommendation/services/geminiService';
@@ -13,7 +14,9 @@ import { useI18n } from './src/i18n/i18n';
 import { useAuth } from './features/auth/AuthContext';
 import AuthModal from './features/auth/components/AuthModal';
 import ProfileModal from './features/auth/components/ProfileModal';
-import { UserIcon } from './components/icons';
+import { UserIcon, HistoryIcon } from './components/icons';
+import { useHistory } from './features/history/HistoryContext';
+import HistoryModal from './features/history/components/HistoryModal';
 
 const STEP_HASH_MAP: { [key: number]: string } = {
     1: 'mood',
@@ -38,6 +41,7 @@ const isInitialStateSufficient = initialStep <= 1;
 const App: React.FC = () => {
     const { t, locale, getTranslatedAnswer } = useI18n();
     const { user, loading: authLoading, preferences, isFirebaseEnabled } = useAuth();
+    const { addHistoryItem } = useHistory();
 
     const [step, setStep] = useState(isInitialStateSufficient ? initialStep : 1);
     const [answers, setAnswers] = useState<PartialUserAnswers>({});
@@ -48,6 +52,7 @@ const App: React.FC = () => {
     const [isFading, setIsFading] = useState(false);
     const [isAuthModalOpen, setAuthModalOpen] = useState(false);
     const [isProfileModalOpen, setProfileModalOpen] = useState(false);
+    const [isHistoryModalOpen, setHistoryModalOpen] = useState(false);
 
     const answersRef = useRef(answers);
     answersRef.current = answers;
@@ -84,39 +89,39 @@ const App: React.FC = () => {
 
         const handleHashChange = () => {
             const wasProgrammatic = isProgrammaticNavigationRef.current;
-            isProgrammaticNavigationRef.current = false;
-
+            isProgrammaticNavigationRef.current = false; 
+    
             if (isTransitioningRef.current) return;
-
+    
             const newStep = getStepFromHash();
-
+    
             if (!wasProgrammatic) {
                 const isStateSufficientForStep = (targetStep: number) => {
                     const currentAnswers = answersRef.current;
                     const currentRecommendation = recommendationRef.current;
                     const currentIsLoading = isLoadingRef.current;
-
+    
                     if (targetStep <= 1) return true;
                     if (targetStep === 2) return !!currentAnswers.mood;
                     if (targetStep === 3) return !!currentAnswers.mood && !!currentAnswers.subMood;
                     if (targetStep === 4) return !!currentAnswers.mood && !!currentAnswers.subMood && !!currentAnswers.occasion;
                     if (targetStep === 5) return currentIsLoading;
                     if (targetStep === 6) return !!currentRecommendation;
-
+                    
                     return false;
                 };
-
+    
                 if (!isStateSufficientForStep(newStep)) {
                     window.location.hash = STEP_HASH_MAP[1];
-                    return;
+                    return; 
                 }
             }
-
+    
             if (newStep === stepRef.current) return;
-
+    
             isTransitioningRef.current = true;
             setIsFading(true);
-
+    
             setTimeout(() => {
                 if (newStep < stepRef.current) {
                     setAnswers(currentAnswers => {
@@ -127,11 +132,11 @@ const App: React.FC = () => {
                         return newAnswers;
                     });
                 }
-
+                
                 if (stepRef.current === 6 && newStep !== 6) {
                     setRecommendation(null);
                 }
-
+    
                 setStep(newStep);
                 setIsFading(false);
                 isTransitioningRef.current = false;
@@ -140,7 +145,7 @@ const App: React.FC = () => {
 
         window.addEventListener('hashchange', handleHashChange);
         return () => window.removeEventListener('hashchange', handleHashChange);
-    }, []);
+    }, []); 
 
 
     const fetchRecommendation = useCallback(async (currentAnswers: UserAnswers) => {
@@ -153,6 +158,9 @@ const App: React.FC = () => {
             const translatedAnswers = getTranslatedAnswer(currentAnswers);
             const result = await getMovieRecommendation(translatedAnswers, previousSuggestions, locale, preferences as UserPreferences);
             setRecommendation(result);
+            if (user && result.tmdbId) {
+                addHistoryItem(result, currentAnswers);
+            }
             setPreviousSuggestions(prev => [...prev, result.title]);
             isProgrammaticNavigationRef.current = true;
             window.location.hash = STEP_HASH_MAP[6];
@@ -163,7 +171,7 @@ const App: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences]);
+    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences, user, addHistoryItem]);
 
     const handleNext = useCallback((data: PartialUserAnswers) => {
         const newAnswers = { ...answers, ...data };
@@ -177,7 +185,7 @@ const App: React.FC = () => {
             window.location.hash = STEP_HASH_MAP[nextStep];
         }
     }, [answers, step, fetchRecommendation]);
-
+    
     const handleBack = () => {
         window.history.back();
     };
@@ -196,9 +204,9 @@ const App: React.FC = () => {
     const renderStep = () => {
         switch (step) {
             case 1: return <MoodSelector onSelect={handleNext} />;
-            case 2: return answers.mood ? <SubMoodStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen />;
-            case 3: return answers.subMood ? <OccasionStep onNext={handleNext} onBack={handleBack} /> : <LoadingScreen />;
-            case 4: return answers.occasion ? <RefinementStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen />;
+            case 2: return answers.mood ? <SubMoodStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen/>;
+            case 3: return answers.subMood ? <OccasionStep onNext={handleNext} onBack={handleBack} /> : <LoadingScreen/>;
+            case 4: return answers.occasion ? <RefinementStep onNext={handleNext} onBack={handleBack} answers={answers} /> : <LoadingScreen/>;
             case 5: return <LoadingScreen />;
             case 6: return recommendation ? <RecommendationScreen recommendation={recommendation} answers={answers as UserAnswers} onTryAgain={handleTryAgain} onBack={handleBackFromRecs} /> : <LoadingScreen />;
             default:
@@ -206,7 +214,7 @@ const App: React.FC = () => {
         }
     };
 
-    const renderAuthButton = () => {
+    const renderAuthSection = () => {
         if (!isFirebaseEnabled) return null;
 
         if (authLoading) {
@@ -215,9 +223,14 @@ const App: React.FC = () => {
 
         if (user) {
             return (
-                <button onClick={() => setProfileModalOpen(true)} className="p-1 rounded-full hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent" aria-label={t('auth.profileTitle')}>
-                    <div className="w-6 h-6 text-text-primary"><UserIcon /></div>
-                </button>
+                 <>
+                    <button onClick={() => setHistoryModalOpen(true)} className="p-1 rounded-full hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent" aria-label={t('auth.historyTitle')}>
+                        <div className="w-6 h-6 text-text-primary"><HistoryIcon/></div>
+                    </button>
+                    <button onClick={() => setProfileModalOpen(true)} className="p-1 rounded-full hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent" aria-label={t('auth.profileTitle')}>
+                        <div className="w-6 h-6 text-text-primary"><UserIcon/></div>
+                    </button>
+                 </>
             )
         }
 
@@ -241,10 +254,10 @@ const App: React.FC = () => {
                     </button>
                     <div className="flex items-center gap-2">
                         <LanguageSwitcher />
-                        {renderAuthButton()}
+                        {renderAuthSection()}
                     </div>
                 </header>
-
+                
                 {error && (
                     <div className="absolute top-24 bg-red-500/80 text-white p-3 rounded-lg animate-fade-in mb-4 z-20">
                         {error}
@@ -254,9 +267,10 @@ const App: React.FC = () => {
                     {renderStep()}
                 </div>
             </main>
-
+            
             {isFirebaseEnabled && <AuthModal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} />}
             {isFirebaseEnabled && <ProfileModal isOpen={isProfileModalOpen} onClose={() => setProfileModalOpen(false)} />}
+            {isFirebaseEnabled && <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setHistoryModalOpen(false)} />}
         </>
     );
 };

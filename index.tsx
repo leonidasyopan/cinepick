@@ -4,6 +4,7 @@ import App from './App';
 import { I18nProvider } from './src/i18n/i18n';
 import { AuthProvider } from './features/auth/AuthContext';
 import { TrendingMoviesProvider } from './features/trending/TrendingMoviesContext';
+import { HistoryProvider } from './features/history/HistoryContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -15,9 +16,11 @@ root.render(
   <React.StrictMode>
     <I18nProvider>
       <AuthProvider>
-        <TrendingMoviesProvider>
-          <App />
-        </TrendingMoviesProvider>
+        <HistoryProvider>
+          <TrendingMoviesProvider>
+            <App />
+          </TrendingMoviesProvider>
+        </HistoryProvider>
       </AuthProvider>
     </I18nProvider>
   </React.StrictMode>
