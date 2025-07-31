@@ -1,4 +1,9 @@
 
+
+
+
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { MovieRecommendation, UserAnswers, WatchProvider } from '../types';
 import { IMAGE_BASE_URL, reFetchMovieDetails } from '../services/tmdbService';
@@ -6,7 +11,9 @@ import { translateText } from '../services/translationService';
 import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon, ImdbIcon, RottenTomatoesIcon, ShareIcon } from '../../../components/icons/index';
 import { useI18n } from '../../../src/i18n/i18n';
 import { useAuth } from '../../auth/AuthContext';
-import { createSharedRecommendation } from '../../sharing/services/sharingService';
+import { saveSharedRecommendation } from '../../sharing/services/sharingService';
+import { doc, collection } from 'firebase/firestore';
+import { db } from '../../../firebase';
 
 const getStreamingIcon = (serviceName: string) => {
     const s = serviceName.toLowerCase();
@@ -146,27 +153,31 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
         : `https://picsum.photos/seed/${encodeURIComponent(title)}/500/750`;
 
     const handleShare = async () => {
+        if (!db) {
+            setShareError(t('share.error'));
+            return;
+        }
         setIsSharing(true);
         setShareError('');
         setShareConfirmation('');
 
         let urlToShare = shareUrl;
+        let newId = '';
+
+        // If we don't have a URL, generate one client-side for immediate use
+        if (!urlToShare) {
+            newId = doc(collection(db, 'sharedRecommendations')).id;
+            urlToShare = `${window.location.origin}${window.location.pathname}#/share/${newId}`;
+            setShareUrl(urlToShare);
+        }
+
+        const shareData = {
+            title: t('share.title', { movie: title }),
+            text: justification,
+            url: urlToShare,
+        };
 
         try {
-            // Create the link if it doesn't exist yet
-            if (!urlToShare) {
-                const recommendationData = { recommendation: displayedRec, userAnswers: answers };
-                const newId = await createSharedRecommendation(recommendationData);
-                urlToShare = `${window.location.origin}${window.location.pathname}#/share/${newId}`;
-                setShareUrl(urlToShare);
-            }
-
-            const shareData = {
-                title: t('share.title', { movie: title }),
-                text: justification,
-                url: urlToShare,
-            };
-
             if (navigator.share) {
                 await navigator.share(shareData);
             } else {
@@ -174,6 +185,17 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                 setShareConfirmation(t('share.linkCopied'));
                 setTimeout(() => setShareConfirmation(''), 2500);
             }
+
+            // Save to Firestore in the background only if it's a new share
+            if (newId) {
+                const recommendationData = { recommendation: displayedRec, userAnswers: answers };
+                saveSharedRecommendation(newId, recommendationData).catch(error => {
+                    // Log the background error, maybe send to a monitoring service
+                    console.error("Background save failed:", error);
+                    // This error is silent to the user as they've already shared the link
+                });
+            }
+
         } catch (error: any) {
             if (error.name !== 'AbortError') { // User cancelling share is not an error
                 console.error("Sharing failed", error);
@@ -233,16 +255,16 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                     {/* Watch On */}
                     <div className="mb-6">
                         <h3 className="text-lg font-bold mb-3 text-text-primary">{t('recommendationScreen.watchOn')}</h3>
-                        <div className="flex items-center justify-center lg:justify-start gap-3">
+                        <div className="flex flex-wrap items-start justify-center lg:justify-start gap-x-4 gap-y-2">
                             {currentWatchProviders.length > 0 ? currentWatchProviders.slice(0, 5).map((provider) => (
-                                <a href={provider.link} target="_blank" rel="noopener noreferrer" key={provider.provider_id} className="flex flex-col items-center gap-1 group">
-                                    <img src={`${IMAGE_BASE_URL}w92${provider.logo_path}`} alt={provider.provider_name} className="w-10 h-10 rounded-md transition-transform group-hover:scale-110" />
-                                    <span className="text-xs text-text-secondary">{provider.provider_name}</span>
+                                <a href={provider.link} target="_blank" rel="noopener noreferrer" key={provider.provider_id} className="flex flex-col items-center gap-1.5 group w-20 text-center">
+                                    <img src={`${IMAGE_BASE_URL}w92${provider.logo_path}`} alt={provider.provider_name} className="w-12 h-12 rounded-lg transition-transform group-hover:scale-110" />
+                                    <span className="text-xs text-text-secondary truncate w-full">{provider.provider_name}</span>
                                 </a>
                             )) : (streamingServices && streamingServices.length > 0) ? streamingServices.map((service, index) => (
-                                <div key={index} className="flex flex-col items-center gap-2">
+                                <div key={index} className="flex flex-col items-center gap-2 w-20 text-center">
                                     {getStreamingIcon(service)}
-                                    <span className="text-xs text-text-secondary">{service}</span>
+                                    <span className="text-xs text-text-secondary truncate w-full">{service}</span>
                                 </div>
                             )) : <p className="text-text-secondary">{t('recommendationScreen.noStreamingInfo')}</p>}
                         </div>

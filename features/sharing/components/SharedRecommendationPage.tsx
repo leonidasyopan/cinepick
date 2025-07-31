@@ -3,7 +3,7 @@ import { getSharedRecommendation } from '../services/sharingService';
 import { SharedRecommendationData } from '../types';
 import { useI18n } from '../../../src/i18n/i18n';
 import { IMAGE_BASE_URL } from '../../recommendation/services/tmdbService';
-import { ImdbIcon, RottenTomatoesIcon } from '../../../components/icons/index';
+import { ImdbIcon, RottenTomatoesIcon, NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon } from '../../../components/icons/index';
 import LoadingScreen from '../../recommendation/components/LoadingScreen';
 
 // Helper functions copied from RecommendationScreen
@@ -12,6 +12,17 @@ const formatRuntime = (minutes: number | undefined): string => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h}h ${m}m`;
+};
+
+const getStreamingIcon = (serviceName: string) => {
+  const s = serviceName.toLowerCase();
+  if (s.includes('netflix')) return <NetflixIcon />;
+  if (s.includes('hulu')) return <HuluIcon />;
+  if (s.includes('prime video') || s.includes('amazon')) return <PrimeVideoIcon />;
+  if (s.includes('disney+')) return <DisneyPlusIcon />;
+  if (s.includes('max')) return <MaxIcon />;
+  if (s.includes('apple tv')) return <AppleTVIcon />;
+  return <GenericStreamIcon />;
 };
 
 const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ text, highlights }) => {
@@ -86,7 +97,7 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
   if (!data) return null;
 
   const { recommendation, userAnswers } = data;
-  const { title, year, posterPath, imdbId, synopsis, runtime, rating, director, cast, justification, trailerSearchQuery } = recommendation;
+  const { title, year, posterPath, imdbId, synopsis, runtime, rating, director, cast, justification, trailerSearchQuery, watchProviders, streamingServices } = recommendation;
 
   const rtUrl = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(title)}`;
   const imdbUrl = imdbId ? `https://www.imdb.com/title/${imdbId}/` : null;
@@ -99,6 +110,8 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
     subMood: `"${translatedAnswers.subMood.toLowerCase()}"`,
     occasion: translatedAnswers.occasion.toLowerCase()
   });
+
+  const currentWatchProviders = watchProviders?.filter(p => p.logo_path) || [];
 
   return (
     <div className="w-full flex flex-col items-center gap-8 animate-fade-in">
@@ -131,6 +144,25 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
                 <HighlightedText text={justification} highlights={highlights} />
               </p>
             </div>
+
+            {/* Watch On */}
+            <div className="mb-6">
+              <h3 className="text-lg font-bold mb-3 text-text-primary">{t('recommendationScreen.watchOn')}</h3>
+              <div className="flex flex-wrap items-start justify-center lg:justify-start gap-x-4 gap-y-2">
+                {currentWatchProviders.length > 0 ? currentWatchProviders.slice(0, 5).map((provider) => (
+                  <a href={provider.link} target="_blank" rel="noopener noreferrer" key={provider.provider_id} className="flex flex-col items-center gap-1.5 group w-20 text-center">
+                    <img src={`${IMAGE_BASE_URL}w92${provider.logo_path}`} alt={provider.provider_name} className="w-12 h-12 rounded-lg transition-transform group-hover:scale-110" />
+                    <span className="text-xs text-text-secondary truncate w-full">{provider.provider_name}</span>
+                  </a>
+                )) : (streamingServices && streamingServices.length > 0) ? streamingServices.map((service, index) => (
+                  <div key={index} className="flex flex-col items-center gap-2 w-20 text-center">
+                    {getStreamingIcon(service)}
+                    <span className="text-xs text-text-secondary truncate w-full">{service}</span>
+                  </div>
+                )) : <p className="text-text-secondary">{t('recommendationScreen.noStreamingInfo')}</p>}
+              </div>
+            </div>
+
             <div className="mb-8">
               <h3 className="text-lg font-bold mb-3 text-text-primary">{t('recommendationScreen.moreDetails')}</h3>
               <div className="flex items-center justify-center lg:justify-start gap-4">
