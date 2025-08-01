@@ -76,11 +76,11 @@
   "share": {
     "title": "Recomendación de CinePick: {movie}",
     "buttonLabel": "Compartir Recomendación",
+    "findOwnMovieButton": "¡Encuentra Tu Propia Película Perfecta!",
     "linkCopied": "¡Enlace copiado!",
     "error": "No se pudo crear el enlace para compartir.",
     "page": {
       "context": "Tu amigo/a buscaba una película {subMood} para una {occasion}. CinePick sugirió:",
-      "cta": "¡Encuentra Tu Propia Película Perfecta!",
       "notFound": "Lo siento, no se pudo encontrar esta recomendación.",
       "loading": "Cargando recomendación..."
     }

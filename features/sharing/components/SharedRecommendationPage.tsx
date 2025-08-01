@@ -103,7 +103,7 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
           onClick={handleFindOwnMovie}
           className="mt-6 bg-accent text-background hover:opacity-90 font-bold py-3 px-8 rounded-full transition-all duration-300"
         >
-          {t('share.page.cta')}
+          {t('share.findOwnMovieButton')}
         </button>
       </div>
     );
@@ -198,7 +198,7 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
                 onClick={handleFindOwnMovie}
                 className="bg-accent text-background hover:opacity-90 font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105"
               >
-                {t('share.page.cta')}
+                {t('share.findOwnMovieButton')}
               </button>
             </div>
           </div>

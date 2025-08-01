@@ -76,11 +76,11 @@
   "share": {
     "title": "CinePick Recommendation: {movie}",
     "buttonLabel": "Share Recommendation",
+    "findOwnMovieButton": "Find Your Own Perfect Movie!",
     "linkCopied": "Link copied!",
     "error": "Could not create share link.",
     "page": {
       "context": "Your friend was looking for a {subMood} film for a {occasion}. CinePick suggested:",
-      "cta": "Find Your Own Perfect Movie!",
       "notFound": "Sorry, this recommendation could not be found.",
       "loading": "Loading recommendation..."
     }

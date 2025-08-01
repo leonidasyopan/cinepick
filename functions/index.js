@@ -92,19 +92,21 @@ exports.renderSharePage = functions.https.onRequest(async (req, res) => {
       if (docSnap.exists) {
         const data = docSnap.data();
 
-        if (!data || !data.recommendation) {
-          console.warn(`Firestore document ${recommendationId} is missing 'recommendation' field.`);
-          return res.status(404).send(indexHtml);
+        // Defensive checks for data integrity
+        if (!data || !data.recommendation || typeof data.recommendation.justification !== "string" || !data.recommendation.justification.trim()) {
+          console.warn(`Firestore document ${recommendationId} is missing or has malformed/empty data.`, data);
+          return res.status(404).send(indexHtml); // Send default HTML
         }
 
         const { recommendation, locale } = data;
         const { title, justification, posterPath } = recommendation;
 
-        // Use fallbacks to prevent errors from undefined values.
         const finalTitle = title || "CinePick Recommendation";
-        const baseDescription = justification || "Check out this movie recommendation from CinePick!";
+        const baseDescription = justification;
         const cta = CTA_BY_LOCALE[locale] || CTA_BY_LOCALE["en-us"]; // Fallback to English
-        const finalDescription = `${baseDescription} - ${cta}`;
+        const finalDescription = `${baseDescription} ${cta}`;
+
+        console.log(`[renderSharePage] ID: ${recommendationId}, Title: ${finalTitle}, Description: ${finalDescription}`);
 
         const imageUrl = posterPath ?
           `https://image.tmdb.org/t/p/w500${posterPath}` :
@@ -122,10 +124,11 @@ exports.renderSharePage = functions.https.onRequest(async (req, res) => {
         return res.status(200).send(finalHtml);
       } else {
         // Doc not found, send default HTML. Client-side will show "not found" page.
+        console.warn(`[renderSharePage] Recommendation ID not found in Firestore: ${recommendationId}`);
         return res.status(404).send(indexHtml);
       }
     } catch (error) {
-      console.error(`Error processing recommendationId ${recommendationId}:`, error);
+      console.error(`[renderSharePage] Error processing recommendationId ${recommendationId}:`, error);
       // Fallback to serving default HTML on any processing error.
       return res.status(500).send(indexHtml);
     }
