@@ -10,6 +10,11 @@ interface HistoryItemCardProps {
 }
 
 export const HistoryItemCard: React.FC<HistoryItemCardProps> = ({ item, onUpdate }) => {
+    // Add a defensive guard to prevent crashes from malformed history items.
+    if (!item || !item.recommendation) {
+        return null;
+    }
+
     const { t } = useI18n();
     const { recommendation, watched, rating, recommendationDate: recDate } = item;
     const { tmdbId, title, year, posterPath } = recommendation;
