@@ -103,6 +103,21 @@
 <body class="bg-background text-text-primary">
   <div id="root"></div>
   <script type="module" src="./index.tsx"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        const swUrl = `${window.location.origin}/sw.js`;
+        navigator.serviceWorker.register(swUrl).then(
+          (registration) => {
+            console.log("Service Worker registered with scope:", registration.scope);
+          },
+          (error) => {
+            console.error("Service Worker registration failed:", error);
+          }
+        );
+      });
+    }
+  </script>
 </body>
 
 </html>
