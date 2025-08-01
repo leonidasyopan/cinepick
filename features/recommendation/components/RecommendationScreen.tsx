@@ -193,7 +193,7 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                 }
                 // Save to Firestore in the background *after* successful share
                 if (newId) {
-                    const recommendationData = { recommendation: displayedRec, userAnswers: answers };
+                    const recommendationData = { recommendation: displayedRec, userAnswers: answers, locale: locale };
                     saveSharedRecommendation(newId, recommendationData).catch(error => {
                         console.error("Background save to Firestore failed:", error);
                     });

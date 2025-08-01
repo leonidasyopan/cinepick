@@ -4,6 +4,13 @@ const admin = require("firebase-admin");
 // The base URL of the live site, used to fetch the HTML template.
 const HOSTING_URL = "https://cinepick-app.web.app";
 
+// Map of locales to their corresponding Call-to-Action strings.
+const CTA_BY_LOCALE = {
+  "en-us": "Find Your Own Perfect Movie!",
+  "es-es": "¡Encuentra Tu Propia Película Perfecta!",
+  "pt-br": "Encontre Seu Próprio Filme Perfeito!",
+};
+
 admin.initializeApp();
 const db = admin.firestore();
 
@@ -90,12 +97,15 @@ exports.renderSharePage = functions.https.onRequest(async (req, res) => {
           return res.status(404).send(indexHtml);
         }
 
-        const { recommendation } = data;
+        const { recommendation, locale } = data;
         const { title, justification, posterPath } = recommendation;
 
         // Use fallbacks to prevent errors from undefined values.
         const finalTitle = title || "CinePick Recommendation";
-        const finalDescription = justification || "Check out this movie recommendation from CinePick!";
+        const baseDescription = justification || "Check out this movie recommendation from CinePick!";
+        const cta = CTA_BY_LOCALE[locale] || CTA_BY_LOCALE["en-us"]; // Fallback to English
+        const finalDescription = `${baseDescription} - ${cta}`;
+
         const imageUrl = posterPath ?
           `https://image.tmdb.org/t/p/w500${posterPath}` :
           `${HOSTING_URL}/apple-touch-icon.png`;

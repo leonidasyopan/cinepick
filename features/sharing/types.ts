@@ -4,4 +4,5 @@ export interface SharedRecommendationData {
   recommendation: MovieRecommendation;
   userAnswers: UserAnswers;
   createdAt: any; // Firestore Timestamp
+  locale?: string;
 }
