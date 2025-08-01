@@ -171,11 +171,13 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
             url: '',
         };
 
+        const currentTranslatedAnswers = getTranslatedAnswer(answers);
         const recommendationData = {
             recommendation: displayedRec,
             userAnswers: answers,
             locale: locale,
-            sharerName: user?.displayName || undefined
+            sharerName: user?.displayName || undefined,
+            translatedSubMood: currentTranslatedAnswers.subMood,
         };
 
         // --- Tier 1: Advanced Sharing with Firebase for Rich Previews ---

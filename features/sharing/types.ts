@@ -6,4 +6,5 @@ export interface SharedRecommendationData {
   createdAt: any; // Firestore Timestamp
   locale?: string;
   sharerName?: string;
+  translatedSubMood?: string;
 }

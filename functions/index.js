@@ -1,15 +1,25 @@
+
+
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
 // The base URL of the live site, used to fetch the HTML template.
 const HOSTING_URL = "https://cinepick-app.web.app";
 
-// Map of locales to their corresponding Call-to-Action strings.
+// Fallback CTA map.
 const CTA_BY_LOCALE = {
   "en-us": "Find Your Own Perfect Movie!",
   "es-es": "¡Encuentra Tu Propia Película Perfecta!",
   "pt-br": "Encontre Seu Próprio Filme Perfeito!",
 };
+
+// Templates for the new, personalized social media preview description.
+const PREVIEW_TEMPLATES = {
+  "en-us": (name, submood, movie) => `${name} was looking for a "${submood.toLowerCase()}" movie and CinePick recommended: ${movie}. See why it's the perfect pick!`,
+  "es-es": (name, submood, movie) => `${name} buscaba una película de "${submood.toLowerCase()}" y CinePick le recomendó: ${movie}. ¡Descubre por qué es la elección perfecta!`,
+  "pt-br": (name, submood, movie) => `${name} estava procurando um filme sobre "${submood.toLowerCase()}" e o CinePick recomendou: ${movie}. Veja por que é a escolha perfeita!`,
+};
+
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -92,19 +102,27 @@ exports.renderSharePage = functions.https.onRequest(async (req, res) => {
       if (docSnap.exists) {
         const data = docSnap.data();
 
-        // Defensive checks for data integrity
-        if (!data || !data.recommendation || typeof data.recommendation.justification !== "string" || !data.recommendation.justification.trim()) {
-          console.warn(`Firestore document ${recommendationId} is missing or has malformed/empty data.`, data);
+        if (!data || !data.recommendation) {
+          console.warn(`Firestore document ${recommendationId} is missing or has malformed data.`, data);
           return res.status(404).send(indexHtml); // Send default HTML
         }
 
-        const { recommendation, locale } = data;
+        const { recommendation, locale, sharerName, translatedSubMood } = data;
         const { title, justification, posterPath } = recommendation;
 
         const finalTitle = title || "CinePick Recommendation";
-        const baseDescription = justification;
-        const cta = CTA_BY_LOCALE[locale] || CTA_BY_LOCALE["en-us"]; // Fallback to English
-        const finalDescription = `${baseDescription} ${cta}`;
+        let finalDescription;
+
+        const templateFn = PREVIEW_TEMPLATES[locale] || PREVIEW_TEMPLATES["en-us"];
+
+        // Use new personalized description if all data is available
+        if (sharerName && translatedSubMood && title) {
+          finalDescription = templateFn(sharerName, translatedSubMood, title);
+        } else {
+          // Fallback to old justification + CTA model
+          const fallbackCta = CTA_BY_LOCALE[locale] || CTA_BY_LOCALE["en-us"];
+          finalDescription = `${justification || "A movie recommendation from a friend."} ${fallbackCta}`;
+        }
 
         console.log(`[renderSharePage] ID: ${recommendationId}, Title: ${finalTitle}, Description: ${finalDescription}`);
 
