@@ -111,7 +111,7 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
 
   if (!data) return null;
 
-  const { recommendation, userAnswers } = data;
+  const { recommendation, userAnswers, sharerName } = data;
   const { title, year, posterPath, imdbId, synopsis, runtime, rating, director, cast, justification, trailerSearchQuery, watchProviders, streamingServices } = recommendation;
 
   const rtUrl = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(title)}`;
@@ -121,10 +121,11 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
 
   const translatedAnswers = getTranslatedAnswer(userAnswers);
   const highlights = [translatedAnswers.subMood, translatedAnswers.occasion, ...translatedAnswers.refinements];
-  const contextText = t('share.page.context', {
-    subMood: `"${translatedAnswers.subMood.toLowerCase()}"`,
-    occasion: translatedAnswers.occasion.toLowerCase()
-  });
+
+  const subMoodText = `"${translatedAnswers.subMood.toLowerCase()}"`;
+  const contextText = sharerName
+    ? t('share.page.contextWithName', { name: sharerName, subMood: subMoodText })
+    : t('share.page.contextWithoutName', { subMood: subMoodText });
 
   const currentWatchProviders = watchProviders?.filter(p => p.logo_path) || [];
 

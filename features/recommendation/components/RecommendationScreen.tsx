@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { MovieRecommendation, UserAnswers, WatchProvider } from '../types';
 import { IMAGE_BASE_URL, reFetchMovieDetails } from '../services/tmdbService';
 import { translateText } from '../services/translationService';
-import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon, ImdbIcon, RottenTomatoesIcon, ShareIcon } from '../../../components/icons/index';
+import { NetflixIcon, HuluIcon, PrimeVideoIcon, DisneyPlusIcon, MaxIcon, AppleTVIcon, GenericStreamIcon, ImdbIcon, RottenTomatoesIcon } from '../../../components/icons/index';
 import { useI18n } from '../../../src/i18n/i18n';
 import { useAuth } from '../../auth/AuthContext';
 import { saveSharedRecommendation } from '../../sharing/services/sharingService';
@@ -67,7 +67,7 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 
 export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendation; answers: UserAnswers; onTryAgain: () => void; onBack: () => void; }> = ({ recommendation, answers, onTryAgain, onBack }) => {
     const { t, locale, getTranslatedAnswer } = useI18n();
-    const { isFirebaseEnabled } = useAuth();
+    const { isFirebaseEnabled, user } = useAuth();
     const [displayedRec, setDisplayedRec] = useState<MovieRecommendation>(recommendation);
     const [isUpdating, setIsUpdating] = useState(false);
 
@@ -171,6 +171,13 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
             url: '',
         };
 
+        const recommendationData = {
+            recommendation: displayedRec,
+            userAnswers: answers,
+            locale: locale,
+            sharerName: user?.displayName || undefined
+        };
+
         // --- Tier 1: Advanced Sharing with Firebase for Rich Previews ---
         if (isFirebaseEnabled && db) {
             let urlToShare = shareUrl;
@@ -193,7 +200,6 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                 }
                 // Save to Firestore in the background *after* successful share
                 if (newId) {
-                    const recommendationData = { recommendation: displayedRec, userAnswers: answers, locale: locale };
                     saveSharedRecommendation(newId, recommendationData).catch(error => {
                         console.error("Background save to Firestore failed:", error);
                     });
@@ -211,7 +217,6 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
             // --- Tier 2: Fallback Sharing (Client-side only) ---
         } else {
             try {
-                const recommendationData = { recommendation: displayedRec, userAnswers: answers };
                 const encodedData = utf8_to_b64(JSON.stringify(recommendationData));
                 sharePayload.url = `${window.location.origin}${window.location.pathname}#/view/${encodedData}`;
 
@@ -324,17 +329,21 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                         >
                             {t('recommendationScreen.tryAgainButton')}
                         </button>
-                        <div className="relative flex items-center justify-center">
+                        <div className="relative">
                             <button
                                 onClick={handleShare}
                                 disabled={isSharing}
-                                className="bg-primary/80 hover:bg-primary text-text-primary font-bold p-3 rounded-full transition-all duration-300 disabled:opacity-50"
+                                className="w-full bg-surface hover:brightness-125 text-text-primary font-bold py-3 px-8 rounded-full transition-all duration-300 disabled:opacity-50"
                                 aria-label={t('share.buttonLabel')}
                             >
-                                {isSharing ? <div className="w-6 h-6 border-2 rounded-full border-text-secondary border-t-accent animate-spin" /> : <ShareIcon className="w-6 h-6" />}
+                                {isSharing ? (
+                                    <div className="w-5 h-5 mx-auto border-2 rounded-full border-text-secondary border-t-accent animate-spin" />
+                                ) : (
+                                    t('recommendationScreen.shareButton')
+                                )}
                             </button>
-                            {shareConfirmation && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareConfirmation}</span>}
-                            {shareError && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareError}</span>}
+                            {shareConfirmation && <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareConfirmation}</span>}
+                            {shareError && <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareError}</span>}
                         </div>
                     </div>
                     <button
