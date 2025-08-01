@@ -1,4 +1,4 @@
-import { doc, setDoc, getDocs, collection, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection, updateDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import type { MovieRecommendation, UserAnswers } from '../../recommendation/types';
 import type { HistoryItem } from '../types';
