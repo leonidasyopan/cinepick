@@ -10,10 +10,7 @@ export const addRecommendationToHistory = async (userId: string, recommendation:
     if (!db || !recommendation.tmdbId) return;
     try {
         const historyItem: HistoryItem = {
-            tmdbId: recommendation.tmdbId,
-            title: recommendation.title,
-            year: recommendation.year,
-            posterPath: recommendation.posterPath || '',
+            recommendation: recommendation,
             recommendationDate: serverTimestamp(),
             watched: false,
             rating: null,

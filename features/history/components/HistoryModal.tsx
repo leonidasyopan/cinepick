@@ -26,7 +26,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose }) => {
                 )}
                 {!loading && history.length > 0 && (
                     history.map(item => (
-                        <HistoryItemCard key={item.tmdbId} item={item} onUpdate={updateHistoryItem} />
+                        <HistoryItemCard key={item.recommendation.tmdbId} item={item} onUpdate={updateHistoryItem} />
                     ))
                 )}
             </div>

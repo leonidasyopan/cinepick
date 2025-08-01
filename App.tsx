@@ -18,12 +18,14 @@ import { UserIcon, HistoryIcon } from './components/icons';
 import { useHistory } from './features/history/HistoryContext';
 import HistoryModal from './features/history/components/HistoryModal';
 import SharedRecommendationPage from './features/sharing/components/SharedRecommendationPage';
+import HistoricRecommendationPage from './features/history/components/HistoricRecommendationPage';
 
 
 type AppRoute =
     | { page: 'main'; step: number }
     | { page: 'share'; id: string }
-    | { page: 'view'; data: string };
+    | { page: 'view'; data: string }
+    | { page: 'history-view'; id: string };
 
 
 const STEP_HASH_MAP: { [key: number]: string } = {
@@ -56,6 +58,10 @@ const getRoute = (): AppRoute => {
 
     if (hashParts[0] === 'share' && hashParts[1]) {
         return { page: 'share', id: hashParts[1] };
+    }
+
+    if (hashParts[0] === 'history' && hashParts[1] === 'view' && hashParts[2]) {
+        return { page: 'history-view', id: hashParts[2] };
     }
 
     // Priority 3: Check for fallback client-side view URLs
@@ -156,7 +162,7 @@ const App: React.FC = () => {
             if (JSON.stringify(newRoute) === JSON.stringify(routeRef.current)) return;
 
             // No need to do state checks for shared pages as they are self-contained.
-            if (newRoute.page === 'share' || newRoute.page === 'view') {
+            if (newRoute.page === 'share' || newRoute.page === 'view' || newRoute.page === 'history-view') {
                 setRoute(newRoute);
                 return;
             }
@@ -307,6 +313,8 @@ const App: React.FC = () => {
                     handleReset();
                     return <LoadingScreen />;
                 }
+            case 'history-view':
+                return <HistoricRecommendationPage recommendationId={route.id} />;
             case 'main':
                 return renderMainFlow(route.step);
             default:
