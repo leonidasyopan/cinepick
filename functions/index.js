@@ -1,25 +1,11 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const fs = require("fs");
-const path = require("path");
 
-// Initialize Firebase Admin SDK
+// The base URL of the live site, used to fetch the HTML template.
+const HOSTING_URL = "https://cinepick-app.web.app";
+
 admin.initializeApp();
-
 const db = admin.firestore();
-
-// Pre-load the HTML template from the filesystem.
-// In a deployed environment, the function's root is the 'functions' directory,
-// so we go up one level to find the 'dist' directory where index.html is.
-const indexHtmlPath = path.join(__dirname, "..", "dist", "index.html");
-let indexHtml = "";
-try {
-  indexHtml = fs.readFileSync(indexHtmlPath, "utf8");
-} catch (error) {
-  console.error("Failed to read index.html from filesystem:", error);
-  // If reading fails on startup, the function won't work correctly.
-  // This could happen if the file path is wrong or permissions are denied.
-}
 
 /**
  * Checks if the User-Agent string belongs to a known social media crawler.
@@ -45,67 +31,97 @@ const isBot = (userAgent) => {
 };
 
 /**
+ * Helper to escape characters in a string to be safely used in HTML attributes.
+ * @param {string} unsafe The string to escape.
+ * @return {string} The escaped string.
+ */
+function escapeHtml(unsafe) {
+  if (typeof unsafe !== "string") {
+    return "";
+  }
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
  * Cloud Function to render share pages with dynamic Open Graph meta tags.
  */
 exports.renderSharePage = functions.https.onRequest(async (req, res) => {
-  // If the index.html template wasn't loaded at startup, we can't proceed.
-  if (!indexHtml) {
-    res.status(500).send("Server configuration error: HTML template not found.");
-    return;
+  if (req.method !== "GET") {
+    return res.status(403).send("Forbidden!");
   }
 
-  // Only handle GET requests for this function.
-  if (req.method !== "GET") {
-    res.status(403).send("Forbidden!");
-    return;
+  // Fetch the latest index.html from the live site on every request.
+  let indexHtml;
+  try {
+    const response = await fetch(`${HOSTING_URL}/index.html`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch index.html: ${response.status}`);
+    }
+    indexHtml = await response.text();
+  } catch (error) {
+    console.error("Critical error: Could not fetch HTML template.", error);
+    return res.status(500).send("Server configuration error: Could not fetch HTML template.");
   }
 
   const userAgent = req.headers["user-agent"];
 
   if (isBot(userAgent)) {
-    // It's a bot, so we need to generate dynamic meta tags.
     const pathParts = req.path.split("/"); // e.g., ["", "share", "someId"]
     const recommendationId = pathParts[2];
 
     if (!recommendationId) {
-      // If no ID is provided, serve the default HTML.
-      res.status(200).send(indexHtml);
-      return;
+      // No ID, serve default (unmodified) HTML.
+      return res.status(200).send(indexHtml);
     }
 
     try {
-      const docRef = db.collection("sharedRecommendations").doc(recommendationId);
-      const docSnap = await docRef.get();
+      const docSnap = await db.collection("sharedRecommendations").doc(recommendationId).get();
 
       if (docSnap.exists) {
         const data = docSnap.data();
+
+        if (!data || !data.recommendation) {
+          console.warn(`Firestore document ${recommendationId} is missing 'recommendation' field.`);
+          return res.status(404).send(indexHtml);
+        }
+
         const { recommendation } = data;
         const { title, justification, posterPath } = recommendation;
 
-        const imageUrl = `https://image.tmdb.org/t/p/w500${posterPath}`;
+        // Use fallbacks to prevent errors from undefined values.
+        const finalTitle = title || "CinePick Recommendation";
+        const finalDescription = justification || "Check out this movie recommendation from CinePick!";
+        const imageUrl = posterPath ?
+          `https://image.tmdb.org/t/p/w500${posterPath}` :
+          `${HOSTING_URL}/apple-touch-icon.png`;
 
-        // Replace placeholders in the HTML template
+        // Replace placeholders in the HTML template with escaped, final values.
         const finalHtml = indexHtml
-          .replace(/__OG_TITLE__/g, title)
-          .replace(/__OG_DESCRIPTION__/g, justification)
-          .replace(/__OG_IMAGE__/g, imageUrl);
+          .replace(/<title>.*<\/title>/, `<title>${escapeHtml(finalTitle)}</title>`)
+          .replace(/<meta property="og:title" content=".*">/, `<meta property="og:title" content="${escapeHtml(finalTitle)}">`)
+          .replace(/<meta property="og:description" content=".*">/, `<meta property="og:description" content="${escapeHtml(finalDescription)}">`)
+          .replace(/<meta name="description" content=".*">/, `<meta name="description" content="${escapeHtml(finalDescription)}">`)
+          .replace(/<meta property="og:image" content=".*">/, `<meta property="og:image" content="${escapeHtml(imageUrl)}">`);
 
         res.set("Cache-Control", "public, max-age=600, s-maxage=1200");
-        res.status(200).send(finalHtml);
+        return res.status(200).send(finalHtml);
       } else {
-        // Recommendation not found, serve default HTML so the link still works
-        // for users and shows a "not found" message on the client.
-        res.status(404).send(indexHtml);
+        // Doc not found, send default HTML. Client-side will show "not found" page.
+        return res.status(404).send(indexHtml);
       }
     } catch (error) {
-      console.error("Error fetching from Firestore or generating HTML:", error);
-      // Serve default HTML as a fallback on error.
-      res.status(500).send(indexHtml);
+      console.error(`Error processing recommendationId ${recommendationId}:`, error);
+      // Fallback to serving default HTML on any processing error.
+      return res.status(500).send(indexHtml);
     }
   } else {
-    // It's a regular user, not a bot. Serve the original index.html.
-    // The client-side React app will handle the routing and display the page.
+    // It's a regular user, serve the original index.html.
     res.set("Cache-Control", "public, max-age=300, s-maxage=600");
-    res.status(200).send(indexHtml);
+    return res.status(200).send(indexHtml);
   }
 });
