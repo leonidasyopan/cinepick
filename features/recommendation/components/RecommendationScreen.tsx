@@ -1,9 +1,5 @@
 
 
-
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import type { MovieRecommendation, UserAnswers, WatchProvider } from '../types';
 import { IMAGE_BASE_URL, reFetchMovieDetails } from '../services/tmdbService';
@@ -167,7 +163,8 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
         // If we don't have a URL, generate one client-side for immediate use
         if (!urlToShare) {
             newId = doc(collection(db, 'sharedRecommendations')).id;
-            urlToShare = `${window.location.origin}${window.location.pathname}#/share/${newId}`;
+            // Generate a clean URL without the hashbang, e.g., "https://domain.com/share/xyz"
+            urlToShare = `${window.location.origin}/share/${newId}`;
             setShareUrl(urlToShare);
         }
 

@@ -38,24 +38,32 @@ const HASH_STEP_MAP: { [key: string]: number } = Object.entries(STEP_HASH_MAP)
     .reduce((acc, [key, value]) => ({ ...acc, [value]: parseInt(key, 10) }), {});
 
 
-const getRouteFromHash = (): AppRoute => {
+const getRoute = (): AppRoute => {
+    const path = window.location.pathname;
     const hash = window.location.hash.substring(1); // remove #
-    if (!hash) return { page: 'main', step: 1 };
 
-    // e.g., ['', 'share', 'xyz123'] or ['', 'mood']
-    const parts = hash.split('/').filter(p => p);
-
-    if (parts[0] === 'share' && parts[1]) {
-        return { page: 'share', id: parts[1] };
+    // Priority 1: Check for server-rendered share URLs (e.g., /share/xyz)
+    const pathParts = path.split('/').filter(p => p);
+    if (pathParts[0] === 'share' && pathParts[1]) {
+        return { page: 'share', id: pathParts[1] };
     }
 
-    const step = HASH_STEP_MAP[parts[0]] || 1;
+    // Priority 2: Check for hash-based routes for client-side navigation
+    if (!hash) return { page: 'main', step: 1 };
+
+    const hashParts = hash.split('/').filter(p => p);
+
+    if (hashParts[0] === 'share' && hashParts[1]) {
+        return { page: 'share', id: hashParts[1] };
+    }
+
+    const step = HASH_STEP_MAP[hashParts[0]] || 1;
     return { page: 'main', step };
 };
 
 
 // This logic runs BEFORE the first render, during component initialization.
-const initialRoute = getRouteFromHash();
+const initialRoute = getRoute();
 // On a fresh load, the application state is always empty.
 // Any step greater than 1 is therefore invalid.
 const isInitialMainFlowStateSufficient = initialRoute.page !== 'main' || initialRoute.step <= 1;
@@ -91,14 +99,22 @@ const App: React.FC = () => {
     const handleReset = useCallback(() => {
         setIsFading(true);
         setTimeout(() => {
-            setRoute({ page: 'main', step: 1 });
+            // Reset state
             setAnswers({});
             setRecommendation(null);
             setPreviousSuggestions([]);
             setError(null);
             setIsLoading(false);
+
+            // Navigate to home
             isProgrammaticNavigationRef.current = true;
+            // Use history.pushState to go to root without reloading, then set hash.
+            window.history.pushState(null, '', '/');
             window.location.hash = STEP_HASH_MAP[1];
+
+            // This will trigger the hashchange listener to set the route
+            // setRoute({ page: 'main', step: 1 });
+
             setIsFading(false);
         }, 300);
     }, []);
@@ -106,6 +122,7 @@ const App: React.FC = () => {
     useEffect(() => {
         if (!isInitialMainFlowStateSufficient) {
             isProgrammaticNavigationRef.current = true;
+            window.history.pushState(null, '', '/');
             window.location.hash = STEP_HASH_MAP[1];
         }
 
@@ -115,7 +132,10 @@ const App: React.FC = () => {
 
             if (isTransitioningRef.current) return;
 
-            const newRoute = getRouteFromHash();
+            const newRoute = getRoute();
+
+            // If the route hasn't changed, do nothing.
+            if (JSON.stringify(newRoute) === JSON.stringify(routeRef.current)) return;
 
             // No need to do state checks for shared page as it's self-contained.
             if (newRoute.page === 'share') {
@@ -141,6 +161,7 @@ const App: React.FC = () => {
                 };
 
                 if (!isStateSufficientForStep(newRoute.step)) {
+                    isProgrammaticNavigationRef.current = true;
                     window.location.hash = STEP_HASH_MAP[1];
                     // The hash change will trigger this handler again, so we just return
                     return;
@@ -174,7 +195,13 @@ const App: React.FC = () => {
         };
 
         window.addEventListener('hashchange', handleHashChange);
-        return () => window.removeEventListener('hashchange', handleHashChange);
+        // Also listen for popstate to handle browser back/forward on path changes
+        window.addEventListener('popstate', handleHashChange);
+
+        return () => {
+            window.removeEventListener('hashchange', handleHashChange);
+            window.removeEventListener('popstate', handleHashChange);
+        };
     }, []);
 
 
@@ -196,12 +223,11 @@ const App: React.FC = () => {
             window.location.hash = STEP_HASH_MAP[6];
         } catch (err: any) {
             setError(err.message || t('app.errorDefault'));
-            isProgrammaticNavigationRef.current = true;
-            window.location.hash = STEP_HASH_MAP[1];
+            handleReset(); // Go home on error
         } finally {
             setIsLoading(false);
         }
-    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences, user, addHistoryItem]);
+    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences, user, addHistoryItem, handleReset]);
 
     const handleNext = useCallback((data: PartialUserAnswers) => {
         const newAnswers = { ...answers, ...data };
@@ -242,7 +268,8 @@ const App: React.FC = () => {
             case 5: return <LoadingScreen />;
             case 6: return recommendation ? <RecommendationScreen recommendation={recommendation} answers={answers as UserAnswers} onTryAgain={handleTryAgain} onBack={handleBackFromRecs} /> : <LoadingScreen />;
             default:
-                return <MoodSelector onSelect={handleNext} />;
+                handleReset();
+                return <LoadingScreen />;
         }
     };
 
@@ -253,7 +280,6 @@ const App: React.FC = () => {
             case 'main':
                 return renderMainFlow(route.step);
             default:
-                // This should not happen, but as a fallback, go to the start
                 handleReset();
                 return <LoadingScreen />;
         }

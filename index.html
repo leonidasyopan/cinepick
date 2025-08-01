@@ -4,7 +4,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CinePick: Your Perfect Movie Matchmaker</title>
+  <!--
+      Placeholders like __OG_TITLE__ are for the server-side rendering function.
+      They will be replaced with dynamic content for social media previews.
+      For regular users, the client-side app will update the title.
+    -->
+  <title>__OG_TITLE__</title>
   <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="shortcut icon" href="/favicon.ico" />
@@ -15,14 +20,14 @@
 
   <!-- Open Graph / Facebook / WhatsApp -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="CinePick: Your Perfect Movie Matchmaker">
+  <meta property="og:title" content="__OG_TITLE__">
   <meta property="og:site_name" content="CinePick">
-  <meta property="og:description"
-    content="Tired of endless scrolling? CinePick asks a few simple questions about your mood and instantly suggests the perfect movie for you to watch tonight.">
-  <meta property="og:image" content="/cinepick-logo-full-white-background.png">
+  <meta property="og:description" content="__OG_DESCRIPTION__">
+  <meta property="og:image" content="__OG_IMAGE__">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="500">
-  <meta property="og:image:height" content="500">
+  <meta property="og:image:height" content="750">
+  <meta name="description" content="__OG_DESCRIPTION__">
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css" />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -79,6 +84,19 @@
     window.process = window.process || {};
     window.process.env = window.process.env || {};
 
+    // IMPORTANT: The key below is for The Movie Database (TMDb), NOT for Gemini.
+    // The Gemini API Key is assumed to be provided by the hosting environment.
+    window.process.env.TMDB_API_KEY = 'f178e076eefcdf17fcac104a012c34ba';
+
+    // Firebase configuration keys are assumed to be provided by the hosting environment.
+    // The values below are placeholders for development and will be undefined in production
+    // if not set in the environment, which the firebase.ts config handles.
+    window.process.env.FIREBASE_API_KEY = undefined;
+    window.process.env.FIREBASE_AUTH_DOMAIN = undefined;
+    window.process.env.FIREBASE_PROJECT_ID = undefined;
+    window.process.env.FIREBASE_STORAGE_BUCKET = undefined;
+    window.process.env.FIREBASE_MESSAGING_SENDER_ID = undefined;
+    window.process.env.FIREBASE_APP_ID = undefined;
   </script>
   <script type="importmap">
 {
@@ -94,14 +112,6 @@
   }
 }
 </script>
-  <!-- Microsoft Clarity Analytics -->
-  <script type="text/javascript">
-    (function (c, l, a, r, i, t, y) {
-      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
-      t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
-      y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
-    })(window, document, "clarity", "script", "skl6b2eino");
-  </script>
 </head>
 
 <body class="bg-background text-text-primary">
