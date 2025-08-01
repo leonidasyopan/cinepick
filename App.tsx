@@ -22,7 +22,8 @@ import SharedRecommendationPage from './features/sharing/components/SharedRecomm
 
 type AppRoute =
     | { page: 'main'; step: number }
-    | { page: 'share'; id: string };
+    | { page: 'share'; id: string }
+    | { page: 'view'; data: string };
 
 
 const STEP_HASH_MAP: { [key: number]: string } = {
@@ -57,6 +58,11 @@ const getRoute = (): AppRoute => {
         return { page: 'share', id: hashParts[1] };
     }
 
+    // Priority 3: Check for fallback client-side view URLs
+    if (hashParts[0] === 'view' && hashParts[1]) {
+        return { page: 'view', data: hashParts[1] };
+    }
+
     const step = HASH_STEP_MAP[hashParts[0]] || 1;
     return { page: 'main', step };
 };
@@ -67,6 +73,18 @@ const initialRoute = getRoute();
 // On a fresh load, the application state is always empty.
 // Any step greater than 1 is therefore invalid.
 const isInitialMainFlowStateSufficient = initialRoute.page !== 'main' || initialRoute.step <= 1;
+
+// Robust Base64 decoding for UTF-8 characters
+const b64_to_utf8 = (str: string) => {
+    try {
+        return decodeURIComponent(atob(str).split('').map(function (c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    } catch (e) {
+        console.error("Base64 decoding failed:", e);
+        return "";
+    }
+}
 
 const App: React.FC = () => {
     const { t, locale, getTranslatedAnswer } = useI18n();
@@ -137,8 +155,8 @@ const App: React.FC = () => {
             // If the route hasn't changed, do nothing.
             if (JSON.stringify(newRoute) === JSON.stringify(routeRef.current)) return;
 
-            // No need to do state checks for shared page as it's self-contained.
-            if (newRoute.page === 'share') {
+            // No need to do state checks for shared pages as they are self-contained.
+            if (newRoute.page === 'share' || newRoute.page === 'view') {
                 setRoute(newRoute);
                 return;
             }
@@ -215,7 +233,7 @@ const App: React.FC = () => {
             const translatedAnswers = getTranslatedAnswer(currentAnswers);
             const result = await getMovieRecommendation(translatedAnswers, previousSuggestions, locale, preferences as UserPreferences);
             setRecommendation(result);
-            if (user && result.tmdbId) {
+            if (user && result.tmdbId && isFirebaseEnabled) {
                 addHistoryItem(result, currentAnswers);
             }
             setPreviousSuggestions(prev => [...prev, result.title]);
@@ -227,7 +245,7 @@ const App: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences, user, addHistoryItem, handleReset]);
+    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences, user, addHistoryItem, handleReset, isFirebaseEnabled]);
 
     const handleNext = useCallback((data: PartialUserAnswers) => {
         const newAnswers = { ...answers, ...data };
@@ -277,6 +295,18 @@ const App: React.FC = () => {
         switch (route.page) {
             case 'share':
                 return <SharedRecommendationPage recommendationId={route.id} />;
+            case 'view':
+                try {
+                    const jsonString = b64_to_utf8(route.data);
+                    if (!jsonString) throw new Error("Decoded string is empty.");
+                    const decodedData = JSON.parse(jsonString);
+                    return <SharedRecommendationPage initialData={decodedData} />;
+                } catch (e) {
+                    console.error("Failed to decode share link", e);
+                    setError(t('share.page.notFound'));
+                    handleReset();
+                    return <LoadingScreen />;
+                }
             case 'main':
                 return renderMainFlow(route.step);
             default:

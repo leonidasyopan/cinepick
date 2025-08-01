@@ -29,6 +29,18 @@ const formatRuntime = (minutes: number | undefined): string => {
     return `${h}h ${m}m`;
 };
 
+// Robust Base64 encoding for UTF-8 characters
+const utf8_to_b64 = (str: string): string => {
+    try {
+        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+            return String.fromCharCode(parseInt(p1, 16));
+        }));
+    } catch (e) {
+        console.error("utf8_to_b64 failed:", e);
+        return "";
+    }
+}
+
 const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ text, highlights }) => {
     if (!highlights || !highlights.length) return <>{text}</>;
 
@@ -55,7 +67,7 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 
 export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendation; answers: UserAnswers; onTryAgain: () => void; onBack: () => void; }> = ({ recommendation, answers, onTryAgain, onBack }) => {
     const { t, locale, getTranslatedAnswer } = useI18n();
-    const { user, isFirebaseEnabled } = useAuth();
+    const { isFirebaseEnabled } = useAuth();
     const [displayedRec, setDisplayedRec] = useState<MovieRecommendation>(recommendation);
     const [isUpdating, setIsUpdating] = useState(false);
 
@@ -149,58 +161,78 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
         : `https://picsum.photos/seed/${encodeURIComponent(title)}/500/750`;
 
     const handleShare = async () => {
-        if (!db) {
-            setShareError(t('share.error'));
-            return;
-        }
         setIsSharing(true);
         setShareError('');
         setShareConfirmation('');
 
-        let urlToShare = shareUrl;
-        let newId = '';
-
-        // If we don't have a URL, generate one client-side for immediate use
-        if (!urlToShare) {
-            newId = doc(collection(db, 'sharedRecommendations')).id;
-            // Generate a clean URL without the hashbang, e.g., "https://domain.com/share/xyz"
-            urlToShare = `${window.location.origin}/share/${newId}`;
-            setShareUrl(urlToShare);
-        }
-
-        const shareData = {
+        const sharePayload = {
             title: t('share.title', { movie: title }),
             text: justification,
-            url: urlToShare,
+            url: '',
         };
 
-        try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                await navigator.clipboard.writeText(urlToShare!);
-                setShareConfirmation(t('share.linkCopied'));
+        // --- Tier 1: Advanced Sharing with Firebase for Rich Previews ---
+        if (isFirebaseEnabled && db) {
+            let urlToShare = shareUrl;
+            let newId = '';
+
+            // Generate a new ID and URL if one hasn't been created for this recommendation yet
+            if (!urlToShare) {
+                newId = doc(collection(db, 'sharedRecommendations')).id;
+                urlToShare = `${window.location.origin}/share/${newId}`;
+                setShareUrl(urlToShare);
+            }
+            sharePayload.url = urlToShare;
+
+            try {
+                if (navigator.share) {
+                    await navigator.share(sharePayload);
+                } else {
+                    await navigator.clipboard.writeText(sharePayload.url);
+                    setShareConfirmation(t('share.linkCopied'));
+                }
+                // Save to Firestore in the background *after* successful share
+                if (newId) {
+                    const recommendationData = { recommendation: displayedRec, userAnswers: answers };
+                    saveSharedRecommendation(newId, recommendationData).catch(error => {
+                        console.error("Background save to Firestore failed:", error);
+                    });
+                }
+            } catch (error: any) {
+                if (error.name !== 'AbortError') {
+                    console.error("Advanced sharing failed", error);
+                    setShareError(t('share.error'));
+                }
+            } finally {
+                setIsSharing(false);
                 setTimeout(() => setShareConfirmation(''), 2500);
             }
 
-            // Save to Firestore in the background only if it's a new share
-            if (newId) {
+            // --- Tier 2: Fallback Sharing (Client-side only) ---
+        } else {
+            try {
                 const recommendationData = { recommendation: displayedRec, userAnswers: answers };
-                saveSharedRecommendation(newId, recommendationData).catch(error => {
-                    // Log the background error, maybe send to a monitoring service
-                    console.error("Background save failed:", error);
-                    // This error is silent to the user as they've already shared the link
-                });
-            }
+                const encodedData = utf8_to_b64(JSON.stringify(recommendationData));
+                sharePayload.url = `${window.location.origin}${window.location.pathname}#/view/${encodedData}`;
 
-        } catch (error: any) {
-            if (error.name !== 'AbortError') { // User cancelling share is not an error
-                console.error("Sharing failed", error);
-                setShareError(t('share.error'));
-                setTimeout(() => setShareError(''), 2500);
+                if (navigator.share) {
+                    await navigator.share(sharePayload);
+                } else {
+                    await navigator.clipboard.writeText(sharePayload.url);
+                    setShareConfirmation(t('share.linkCopied'));
+                }
+            } catch (error: any) {
+                if (error.name !== 'AbortError') {
+                    console.error("Fallback sharing failed", error);
+                    setShareError(t('share.error'));
+                }
+            } finally {
+                setIsSharing(false);
+                setTimeout(() => {
+                    setShareConfirmation('');
+                    setShareError('');
+                }, 2500);
             }
-        } finally {
-            setIsSharing(false);
         }
     };
 
@@ -292,20 +324,18 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                         >
                             {t('recommendationScreen.tryAgainButton')}
                         </button>
-                        {isFirebaseEnabled && user && (
-                            <div className="relative flex items-center justify-center">
-                                <button
-                                    onClick={handleShare}
-                                    disabled={isSharing}
-                                    className="bg-primary/80 hover:bg-primary text-text-primary font-bold p-3 rounded-full transition-all duration-300 disabled:opacity-50"
-                                    aria-label={t('share.buttonLabel')}
-                                >
-                                    {isSharing ? <div className="w-6 h-6 border-2 rounded-full border-text-secondary border-t-accent animate-spin" /> : <ShareIcon className="w-6 h-6" />}
-                                </button>
-                                {shareConfirmation && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareConfirmation}</span>}
-                                {shareError && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareError}</span>}
-                            </div>
-                        )}
+                        <div className="relative flex items-center justify-center">
+                            <button
+                                onClick={handleShare}
+                                disabled={isSharing}
+                                className="bg-primary/80 hover:bg-primary text-text-primary font-bold p-3 rounded-full transition-all duration-300 disabled:opacity-50"
+                                aria-label={t('share.buttonLabel')}
+                            >
+                                {isSharing ? <div className="w-6 h-6 border-2 rounded-full border-text-secondary border-t-accent animate-spin" /> : <ShareIcon className="w-6 h-6" />}
+                            </button>
+                            {shareConfirmation && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareConfirmation}</span>}
+                            {shareError && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg animate-fade-in">{shareError}</span>}
+                        </div>
                     </div>
                     <button
                         onClick={onBack}

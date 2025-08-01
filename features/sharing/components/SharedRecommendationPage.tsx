@@ -45,37 +45,52 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 
 // Main Component
 interface SharedRecommendationPageProps {
-  recommendationId: string;
+  recommendationId?: string;
+  initialData?: SharedRecommendationData;
 }
 
-const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ recommendationId }) => {
+const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ recommendationId, initialData }) => {
   const { t, getTranslatedAnswer } = useI18n();
-  const [data, setData] = useState<SharedRecommendationData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<SharedRecommendationData | null>(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchRec = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const fetchedData = await getSharedRecommendation(recommendationId);
-        if (fetchedData) {
-          setData(fetchedData);
-        } else {
-          setError(t('share.page.notFound'));
+    // If data is passed directly, use it.
+    if (initialData) {
+      setData(initialData);
+      setLoading(false);
+      return;
+    }
+
+    // If an ID is passed, fetch from the service.
+    if (recommendationId) {
+      const fetchRec = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const fetchedData = await getSharedRecommendation(recommendationId);
+          if (fetchedData) {
+            setData(fetchedData);
+          } else {
+            setError(t('share.page.notFound'));
+          }
+        } catch (err) {
+          setError(t('app.errorDefault'));
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        setError(t('app.errorDefault'));
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (recommendationId) fetchRec();
-  }, [recommendationId, t]);
+      };
+      fetchRec();
+    } else {
+      // If neither is provided, it's an error.
+      setError(t('share.page.notFound'));
+      setLoading(false);
+    }
+  }, [recommendationId, initialData, t]);
 
   const handleFindOwnMovie = () => {
-    window.location.hash = '/';
+    window.location.href = '/';
   };
 
   if (loading) return <LoadingScreen />;
