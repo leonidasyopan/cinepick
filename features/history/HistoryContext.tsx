@@ -43,7 +43,7 @@ export const HistoryProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         // Optimistic update
         setHistory(currentHistory => currentHistory.map(item =>
-            item.recommendation.tmdbId === tmdbId ? { ...item, ...updates } : item
+            (item.recommendation && item.recommendation.tmdbId === tmdbId) ? { ...item, ...updates } : item
         ));
 
         try {

@@ -25,9 +25,11 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose }) => {
                     <p className="text-center text-text-secondary py-10">{t('auth.historyEmpty')}</p>
                 )}
                 {!loading && history.length > 0 && (
-                    history.map(item => (
-                        <HistoryItemCard key={item.recommendation.tmdbId} item={item} onUpdate={updateHistoryItem} />
-                    ))
+                    history
+                        .filter(item => item && item.recommendation && item.recommendation.tmdbId)
+                        .map(item => (
+                            <HistoryItemCard key={item.recommendation.tmdbId} item={item} onUpdate={updateHistoryItem} />
+                        ))
                 )}
             </div>
         </Modal>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useHistory } from '../HistoryContext';
 import { RecommendationScreen } from '../../recommendation/components/RecommendationScreen';
@@ -18,7 +17,7 @@ const HistoricRecommendationPage: React.FC<HistoricRecommendationPageProps> = ({
   }
 
   const numericId = parseInt(recommendationId, 10);
-  const historyItem = history.find(item => item.recommendation.tmdbId === numericId);
+  const historyItem = history.find(item => item.recommendation && item.recommendation.tmdbId === numericId);
 
   if (!historyItem) {
     return (
