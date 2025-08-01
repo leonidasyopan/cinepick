@@ -69,6 +69,7 @@
     "watchOn": "Onde Assistir",
     "trailerButton": "Ver Trailer",
     "tryAgainButton": "Não é bem isso? Tente de novo!",
+    "shareButton": "Compartilhar",
     "noStreamingInfo": "Informação de streaming não disponível.",
     "justificationHeader": "Por Que É a Sua Escolha Perfeita",
     "moreDetails": "Mais Detalhes"
@@ -76,11 +77,12 @@
   "share": {
     "title": "Recomendação do CinePick: {movie}",
     "buttonLabel": "Compartilhar Recomendação",
+    "findOwnMovieButton": "Encontre Seu Próprio Filme Perfeito!",
     "linkCopied": "Link copiado!",
     "error": "Não foi possível criar o link de compartilhamento.",
     "page": {
-      "context": "Seu amigo(a) estava procurando um filme {subMood} para uma {occasion}. O CinePick sugeriu:",
-      "cta": "Encontre Seu Próprio Filme Perfeito!",
+      "contextWithName": "{name} estava procurando um filme {subMood} para sua noite de cinema. O CinePick sugeriu:",
+      "contextWithoutName": "Um amigo(a) estava procurando um filme {subMood} para sua noite de cinema. O CinePick sugeriu:",
       "notFound": "Desculpe, esta recomendação não foi encontrada.",
       "loading": "Carregando recomendação..."
     }

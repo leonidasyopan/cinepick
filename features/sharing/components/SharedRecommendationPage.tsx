@@ -45,37 +45,52 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 
 // Main Component
 interface SharedRecommendationPageProps {
-  recommendationId: string;
+  recommendationId?: string;
+  initialData?: SharedRecommendationData;
 }
 
-const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ recommendationId }) => {
+const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ recommendationId, initialData }) => {
   const { t, getTranslatedAnswer } = useI18n();
-  const [data, setData] = useState<SharedRecommendationData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<SharedRecommendationData | null>(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchRec = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const fetchedData = await getSharedRecommendation(recommendationId);
-        if (fetchedData) {
-          setData(fetchedData);
-        } else {
-          setError(t('share.page.notFound'));
+    // If data is passed directly, use it.
+    if (initialData) {
+      setData(initialData);
+      setLoading(false);
+      return;
+    }
+
+    // If an ID is passed, fetch from the service.
+    if (recommendationId) {
+      const fetchRec = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const fetchedData = await getSharedRecommendation(recommendationId);
+          if (fetchedData) {
+            setData(fetchedData);
+          } else {
+            setError(t('share.page.notFound'));
+          }
+        } catch (err) {
+          setError(t('app.errorDefault'));
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        setError(t('app.errorDefault'));
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (recommendationId) fetchRec();
-  }, [recommendationId, t]);
+      };
+      fetchRec();
+    } else {
+      // If neither is provided, it's an error.
+      setError(t('share.page.notFound'));
+      setLoading(false);
+    }
+  }, [recommendationId, initialData, t]);
 
   const handleFindOwnMovie = () => {
-    window.location.hash = '/';
+    window.location.href = '/';
   };
 
   if (loading) return <LoadingScreen />;
@@ -88,7 +103,7 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
           onClick={handleFindOwnMovie}
           className="mt-6 bg-accent text-background hover:opacity-90 font-bold py-3 px-8 rounded-full transition-all duration-300"
         >
-          {t('share.page.cta')}
+          {t('share.findOwnMovieButton')}
         </button>
       </div>
     );
@@ -96,7 +111,7 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
 
   if (!data) return null;
 
-  const { recommendation, userAnswers } = data;
+  const { recommendation, userAnswers, sharerName } = data;
   const { title, year, posterPath, imdbId, synopsis, runtime, rating, director, cast, justification, trailerSearchQuery, watchProviders, streamingServices } = recommendation;
 
   const rtUrl = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(title)}`;
@@ -106,10 +121,11 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
 
   const translatedAnswers = getTranslatedAnswer(userAnswers);
   const highlights = [translatedAnswers.subMood, translatedAnswers.occasion, ...translatedAnswers.refinements];
-  const contextText = t('share.page.context', {
-    subMood: `"${translatedAnswers.subMood.toLowerCase()}"`,
-    occasion: translatedAnswers.occasion.toLowerCase()
-  });
+
+  const subMoodText = `"${translatedAnswers.subMood.toLowerCase()}"`;
+  const contextText = sharerName
+    ? t('share.page.contextWithName', { name: sharerName, subMood: subMoodText })
+    : t('share.page.contextWithoutName', { subMood: subMoodText });
 
   const currentWatchProviders = watchProviders?.filter(p => p.logo_path) || [];
 
@@ -183,7 +199,7 @@ const SharedRecommendationPage: React.FC<SharedRecommendationPageProps> = ({ rec
                 onClick={handleFindOwnMovie}
                 className="bg-accent text-background hover:opacity-90 font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105"
               >
-                {t('share.page.cta')}
+                {t('share.findOwnMovieButton')}
               </button>
             </div>
           </div>

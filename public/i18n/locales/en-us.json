@@ -69,6 +69,7 @@
     "watchOn": "Where to Watch",
     "trailerButton": "Watch Trailer",
     "tryAgainButton": "Not quite? Try again!",
+    "shareButton": "Share",
     "noStreamingInfo": "Streaming info not available.",
     "justificationHeader": "Why It's Your Perfect Pick",
     "moreDetails": "More Details"
@@ -76,11 +77,12 @@
   "share": {
     "title": "CinePick Recommendation: {movie}",
     "buttonLabel": "Share Recommendation",
+    "findOwnMovieButton": "Find Your Own Perfect Movie!",
     "linkCopied": "Link copied!",
     "error": "Could not create share link.",
     "page": {
-      "context": "Your friend was looking for a {subMood} film for a {occasion}. CinePick suggested:",
-      "cta": "Find Your Own Perfect Movie!",
+      "contextWithName": "{name} was looking for a {subMood} movie for their movie night. CinePick suggested:",
+      "contextWithoutName": "A friend was looking for a {subMood} movie for their movie night. CinePick suggested:",
       "notFound": "Sorry, this recommendation could not be found.",
       "loading": "Loading recommendation..."
     }
