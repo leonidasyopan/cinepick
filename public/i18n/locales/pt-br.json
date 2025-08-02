@@ -1,4 +1,3 @@
-
 {
   "common": {
     "back": "Voltar",
@@ -56,14 +55,18 @@
   },
   "tasteOnboarding": {
     "welcomeTitle": "Bem-vindo(a) ao CinePick!",
-    "welcomeBody": "Cansado(a) de rolar a tela sem parar? Para nos ajudar a encontrar o seu filme perfeito em segundos, vamos jogar um jogo rápido para entender o seu gosto único.",
+    "welcomeBody": "Vamos descobrir seu gosto único. Jogue um jogo rápido de 'Isto ou Aquilo' com filmes icônicos. Suas escolhas ensinarão à nossa IA o que você ama, liberando recomendações feitas sob medida para você.",
     "welcomeButton": "Vamos Jogar!",
     "gameTitle": "Batalha de Filmes",
     "gameSubtitle": "Qual filme você prefere?",
     "gameFinishButton": "Terminei por agora",
     "completeTitle": "Tudo Certo!",
     "completeBody": "Suas preferências foram salvas. Nós as usaremos para te dar recomendações melhores e mais personalizadas. Vamos encontrar seu próximo filme favorito!",
-    "completeButton": "Começar a Escolher"
+    "completeButton": "Começar a Escolher",
+    "game": {
+      "dontKnow": "Não conheço",
+      "skipPair": "Pular este duelo"
+    }
   },
   "history": {
     "deprecatedItem": "Este item é de uma versão anterior e não pode ser visualizado."

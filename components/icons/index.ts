@@ -1,5 +1,3 @@
-
-
 export * from './AppleTVIcon';
 export * from './BaseStreamingIcon';
 export * from './CryIcon';
@@ -22,3 +20,6 @@ export * from './HistoryIcon';
 export * from './ThumbsUpIcon';
 export * from './ThumbsDownIcon';
 export * from './ShareIcon';
+export * from './EyeSlashIcon';
+export * from './FilmIcon';
+export * from './SkipIcon';

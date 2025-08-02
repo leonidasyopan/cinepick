@@ -55,14 +55,18 @@
   },
   "tasteOnboarding": {
     "welcomeTitle": "Welcome to CinePick!",
-    "welcomeBody": "Tired of endless scrolling? To help us find your perfect movie in seconds, let's play a quick game to understand your unique taste.",
+    "welcomeBody": "Let's find your unique taste. Play a quick 'This or That' game with iconic movies. Your choices will teach our AI what you love, unlocking recommendations tailored just for you.",
     "welcomeButton": "Let's Play!",
     "gameTitle": "Film Showdown",
     "gameSubtitle": "Which movie do you prefer?",
     "gameFinishButton": "I'm Done for Now",
     "completeTitle": "All Set!",
     "completeBody": "Your preferences have been saved. We'll use them to give you better, more personalized recommendations. Let's find your next favorite movie!",
-    "completeButton": "Start Picking"
+    "completeButton": "Start Picking",
+    "game": {
+      "dontKnow": "I don't know this one",
+      "skipPair": "Skip match"
+    }
   },
   "history": {
     "deprecatedItem": "This item is from a previous version and cannot be viewed."
