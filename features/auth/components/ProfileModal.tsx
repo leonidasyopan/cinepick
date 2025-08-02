@@ -52,13 +52,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={t('auth.profileTitle')}>
             <div className="flex flex-col gap-6">
-                {user && <p className="text-center text-text-secondary -mt-4 mb-2">{t('auth.loggedInAs', { email: user.email })}</p>}
+                {user && <p className="text-center text-text-secondary -mt-4 mb-2">{t('auth.loggedInAs', { email: user.email ?? '' })}</p>}
 
                 {/* Taste Section */}
                 <div className="flex flex-col gap-2 p-4 bg-primary/50 rounded-lg">
                     <h3 className="text-lg font-semibold text-text-primary">{t('auth.taste.title')}</h3>
                     <p className="text-sm text-text-secondary">
-                        {t('auth.taste.classified', { count: tastePreferences.length, total: totalMoviesInGame })}
+                        {t('auth.taste.classified', { count: tastePreferences.length.toString(), total: totalMoviesInGame.toString() })}
                     </p>
                     <button
                         onClick={handleRefineTaste}

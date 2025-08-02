@@ -3,7 +3,9 @@
   "common": {
     "back": "Volver",
     "appName": "Cine",
-    "appNameAccent": "Pick"
+    "appNameAccent": "Pick",
+    "done": "Hecho",
+    "next": "Siguiente"
   },
   "language": {
     "name": "Español",
@@ -28,6 +30,8 @@
     "startYear": "Recomendar películas desde este año en adelante",
     "ageRating": "Calificación de edad máxima",
     "save": "Guardar Preferencias",
+    "saveSuccess": "¡Preferencias guardadas!",
+    "saveError": "Error al guardar.",
     "loggedInAs": "Sesión iniciada como {email}",
     "signInWithGoogle": "Iniciar sesión con Google",
     "orSeparator": "O",
@@ -38,12 +42,28 @@
     "historyWatched": "Visto",
     "historyRecommendedOn": "Recomendado el {date}",
     "historyEmpty": "Aún no tienes historial de recomendaciones. ¡Encuentra una película para empezar!",
+    "taste": {
+      "title": "Mis Gustos",
+      "classified": "Has clasificado {count} de {total} películas.",
+      "button": "Refinar Mis Gustos"
+    },
     "error": {
       "emailInUse": "Este correo electrónico ya está en uso.",
       "weakPassword": "La contraseña debe tener al menos 6 caracteres.",
       "invalidCredential": "Correo electrónico o contraseña no válidos.",
       "generic": "Ocurrió un error. Por favor, inténtalo de nuevo."
     }
+  },
+  "tasteOnboarding": {
+    "welcomeTitle": "¡Te damos la bienvenida a CinePick!",
+    "welcomeBody": "¿Cansado/a de buscar sin parar? Para ayudarnos a encontrar tu película perfecta en segundos, juguemos un juego rápido para entender tus gustos únicos.",
+    "welcomeButton": "¡Vamos a Jugar!",
+    "gameTitle": "Duelo de Películas",
+    "gameSubtitle": "¿Qué película prefieres?",
+    "gameFinishButton": "He terminado por ahora",
+    "completeTitle": "¡Todo listo!",
+    "completeBody": "Tus preferencias han sido guardadas. Las usaremos para darte recomendaciones mejores y más personalizadas. ¡Encontremos tu próxima película favorita!",
+    "completeButton": "Empezar a Elegir"
   },
   "history": {
     "deprecatedItem": "Este elemento es de una versión anterior y no se puede ver."

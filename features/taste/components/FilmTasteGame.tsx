@@ -3,6 +3,7 @@ import StepContainer from '../../../components/StepContainer';
 import { useI18n } from '../../../src/i18n/i18n';
 import { useTaste } from '../TasteContext';
 import { TasteMovie } from '../types';
+import { TASTE_IMAGE_BASE_URL } from '../services/tasteImageService';
 
 const MovieCard: React.FC<{
   movie: TasteMovie;
@@ -25,7 +26,7 @@ const MovieCard: React.FC<{
       <div
         className={`relative w-full aspect-[2/3] rounded-lg shadow-xl ${baseTransition} ${cardStyle}`}
       >
-        <img src={`https://image.tmdb.org/t/p/w500${movie.posterPath}`} alt={movie.title} className="w-full h-full object-cover rounded-lg" />
+        <img src={`${TASTE_IMAGE_BASE_URL}${movie.posterPath}`} alt={movie.title} className="w-full h-full object-cover rounded-lg" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent rounded-lg" />
         <h3 className="absolute bottom-2 left-3 right-3 text-white font-bold text-lg leading-tight [text-shadow:0_1px_4px_rgba(0,0,0,1)]">{movie.title}</h3>
       </div>

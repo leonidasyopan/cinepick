@@ -10,8 +10,8 @@ interface AuthContextType {
     preferences: Partial<UserPreferences>;
     updateUserPreferences: (prefs: Partial<UserPreferences>) => Promise<void>;
     signInWithGoogle: () => Promise<UserCredential>;
-    signUpWithEmail: (email, password) => Promise<UserCredential>;
-    signInWithEmail: (email, password) => Promise<UserCredential>;
+    signUpWithEmail: (email: string, password: string) => Promise<UserCredential>;
+    signInWithEmail: (email: string, password: string) => Promise<UserCredential>;
     logout: () => Promise<void>;
     isFirebaseEnabled: boolean;
 }
@@ -61,12 +61,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return await signInWithPopup(auth, googleProvider);
     };
 
-    const signUpWithEmail = async (email, password): Promise<UserCredential> => {
+    const signUpWithEmail = async (email: string, password: string): Promise<UserCredential> => {
         if (!auth) throw new Error("Firebase not configured");
         return await createUserWithEmailAndPassword(auth, email, password);
     };
 
-    const signInWithEmail = async (email, password): Promise<UserCredential> => {
+    const signInWithEmail = async (email: string, password: string): Promise<UserCredential> => {
         if (!auth) throw new Error("Firebase not configured");
         return await signInWithEmailAndPassword(auth, email, password);
     };

@@ -248,7 +248,6 @@ const App: React.FC = () => {
                 previousSuggestions,
                 locale,
                 preferences as UserPreferences,
-                tastePreferences
             );
             setRecommendation(result);
             if (user && result.tmdbId && isFirebaseEnabled) {
