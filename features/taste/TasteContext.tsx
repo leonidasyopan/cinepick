@@ -2,19 +2,9 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { getTastePreferences, addTastePreference } from './services/tasteService';
-import { TASTE_GAME_MOVIE_IDS, INITIAL_TASTE_IDS } from './constants';
-import type { TasteMovie, TastePreference, TastePreferenceInfo } from './types';
+import { TASTE_GAME_MOVIE_IDS } from './constants';
+import type { TasteMovie, TastePreferenceInfo } from './types';
 import { preloadImage, TASTE_IMAGE_BASE_URL, fetchAllTasteMovies } from './services/tasteImageService';
-
-// Helper to shuffle an array
-const shuffleArray = <T,>(array: T[]): T[] => {
-  const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
-};
 
 interface TasteContextType {
   tastePreferences: TastePreferenceInfo[];
@@ -35,38 +25,25 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [allMovies, setAllMovies] = useState<TasteMovie[]>([]);
   const [moviesById, setMoviesById] = useState<Map<number, TasteMovie>>(new Map());
 
-  const [challengerQueue, setChallengerQueue] = useState<TasteMovie[]>([]);
-  const [currentWinner, setCurrentWinner] = useState<TasteMovie | null>(null);
-
   // Effect 1: Fetch all movie data from TMDb API on component mount.
   useEffect(() => {
     setIsFetchingInitialData(true);
     fetchAllTasteMovies(TASTE_GAME_MOVIE_IDS)
       .then(fetchedMovies => {
-        setAllMovies(fetchedMovies);
-        setMoviesById(new Map(fetchedMovies.map(movie => [movie.tmdbId, movie])));
+        // Ensure fetched movies follow the same order as the ID list
+        const fetchedMoviesMap = new Map(fetchedMovies.map(m => [m.tmdbId, m]));
+        const orderedMovies = TASTE_GAME_MOVIE_IDS.map(id => fetchedMoviesMap.get(id)).filter(Boolean) as TasteMovie[];
+
+        setAllMovies(orderedMovies);
+        setMoviesById(new Map(orderedMovies.map(movie => [movie.tmdbId, movie])));
       })
       .catch(error => console.error("Failed to fetch initial movie data.", error))
       .finally(() => setIsFetchingInitialData(false));
   }, []);
 
-  // Effect 2: Setup game state when user or initial movie data changes.
+  // Effect 2: Fetch user preferences when user or initial movie data changes.
   useEffect(() => {
     if (isFetchingInitialData || allMovies.length === 0) return;
-
-    const setupGameState = (prefs: TastePreferenceInfo[]) => {
-      const winner = prefs.length > 0 ? prefs[0].preferred : moviesById.get(INITIAL_TASTE_IDS[0]);
-      if (!winner) return;
-      setCurrentWinner(winner);
-
-      const classifiedIds = new Set(prefs.flatMap(p => [p.preferred.tmdbId, p.rejected.tmdbId]));
-      const initialPairIds = new Set(INITIAL_TASTE_IDS);
-
-      const remainingChallengers = allMovies.filter(m =>
-        !initialPairIds.has(m.tmdbId) && !classifiedIds.has(m.tmdbId)
-      );
-      setChallengerQueue(shuffleArray(remainingChallengers));
-    };
 
     if (user) {
       setIsFetchingUserPrefs(true);
@@ -80,75 +57,76 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             .filter(p => p.preferred && p.rejected) as TastePreferenceInfo[];
 
           setTastePreferences(detailedPrefs);
-          setupGameState(detailedPrefs);
         })
         .finally(() => setIsFetchingUserPrefs(false));
     } else {
       setTastePreferences([]);
-      setupGameState([]);
       setIsFetchingUserPrefs(false);
     }
-  }, [user, allMovies, moviesById, isFetchingInitialData]);
+  }, [user, allMovies.length, moviesById, isFetchingInitialData]);
 
-  // Effect 3: Preload images for the challenger queue and current champion.
+  // --- Derived State Calculation ---
+  const isLoading = isFetchingInitialData || isFetchingUserPrefs;
+
+  const classifiedIds = new Set(tastePreferences.flatMap(p => [p.preferred.tmdbId, p.rejected.tmdbId]));
+
+  let currentPair: [TasteMovie, TasteMovie] | null = null;
+  let nextChallengers: TasteMovie[] = [];
+
+  if (!isLoading && allMovies.length > 0) {
+    if (tastePreferences.length === 0) {
+      if (allMovies.length >= 2) {
+        currentPair = [allMovies[0], allMovies[1]];
+        nextChallengers = allMovies.slice(2);
+      }
+    } else {
+      const lastWinner = tastePreferences[0].preferred;
+      const nextUnclassifiedMovie = allMovies.find(movie => !classifiedIds.has(movie.tmdbId));
+
+      if (lastWinner && nextUnclassifiedMovie) {
+        currentPair = [lastWinner, nextUnclassifiedMovie];
+        const challengerIndex = allMovies.findIndex(m => m.tmdbId === nextUnclassifiedMovie.tmdbId);
+        if (challengerIndex !== -1) {
+          nextChallengers = allMovies.slice(challengerIndex + 1);
+        }
+      }
+    }
+  }
+
+  // Effect 3: Preload images for the current pair and next few challengers.
   useEffect(() => {
-    challengerQueue.slice(0, 4).forEach(movie => {
+    if (currentPair) {
+      preloadImage(`${TASTE_IMAGE_BASE_URL}${currentPair[0].posterPath}`);
+      preloadImage(`${TASTE_IMAGE_BASE_URL}${currentPair[1].posterPath}`);
+    }
+    nextChallengers.slice(0, 2).forEach(movie => {
       if (movie.posterPath) preloadImage(`${TASTE_IMAGE_BASE_URL}${movie.posterPath}`);
     });
-    if (currentWinner?.posterPath) {
-      preloadImage(`${TASTE_IMAGE_BASE_URL}${currentWinner.posterPath}`);
-    }
-  }, [challengerQueue, currentWinner]);
+  }, [currentPair, nextChallengers]);
 
   const classifyPreference = useCallback(async (winner: TasteMovie, loser: TasteMovie) => {
     const newPreference: TastePreferenceInfo = { preferred: winner, rejected: loser };
-    const oldState = { prefs: tastePreferences, queue: challengerQueue, winner: currentWinner };
+    const originalPreferences = tastePreferences;
 
     setTastePreferences(prev => [newPreference, ...prev]);
-    setCurrentWinner(winner);
-
-    // The showdown is over, remove the challenger that just competed from the queue.
-    // This prevents them from appearing again.
-    if (tastePreferences.length > 0) {
-      setChallengerQueue(prev => prev.slice(1));
-    }
 
     if (user) {
       try {
         await addTastePreference(user.uid, winner.tmdbId, loser.tmdbId);
       } catch (error) {
         console.error("Failed to save taste preference, reverting optimistic update.", error);
-        setTastePreferences(oldState.prefs);
-        setChallengerQueue(oldState.queue);
-        setCurrentWinner(oldState.winner);
+        setTastePreferences(originalPreferences);
       }
     }
-  }, [user, tastePreferences, challengerQueue, currentWinner]);
-
-  const getCurrentPair = (): [TasteMovie, TasteMovie] | null => {
-    if (isFetchingInitialData || isFetchingUserPrefs) return null;
-
-    if (tastePreferences.length === 0) {
-      const movieA = moviesById.get(INITIAL_TASTE_IDS[0]);
-      const movieB = moviesById.get(INITIAL_TASTE_IDS[1]);
-      return movieA && movieB ? [movieA, movieB] : null;
-    }
-
-    if (!currentWinner || challengerQueue.length === 0) {
-      return null; // Game over
-    }
-
-    const nextChallenger = challengerQueue[0];
-    return [currentWinner, nextChallenger];
-  };
+  }, [user, tastePreferences]);
 
   const value = {
     tastePreferences,
-    isLoading: isFetchingInitialData || isFetchingUserPrefs,
+    isLoading: isLoading,
     classifyPreference,
-    currentPair: getCurrentPair(),
+    currentPair: currentPair,
     classifiedCount: tastePreferences.length,
-    totalMoviesInGame: allMovies.length > 0 ? allMovies.length : TASTE_GAME_MOVIE_IDS.length,
+    totalMoviesInGame: TASTE_GAME_MOVIE_IDS.length,
   };
 
   return <TasteContext.Provider value={value}>{children}</TasteContext.Provider>;
