@@ -49,6 +49,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
 
     const ratingOptions: UserPreferences['ageRating'][] = ['Any', 'G', 'PG', 'PG-13', 'R', 'NC-17'];
 
+    // The number of films classified is always one more than the number of preferences (battles),
+    // except when there are no preferences, in which case it's zero.
+    const classifiedFilmsCount = tastePreferences.length > 0 ? tastePreferences.length + 1 : 0;
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={t('auth.profileTitle')}>
             <div className="flex flex-col gap-6">
@@ -58,7 +62,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                 <div className="flex flex-col gap-2 p-4 bg-primary/50 rounded-lg">
                     <h3 className="text-lg font-semibold text-text-primary">{t('auth.taste.title')}</h3>
                     <p className="text-sm text-text-secondary">
-                        {t('auth.taste.classified', { count: tastePreferences.length.toString(), total: totalMoviesInGame.toString() })}
+                        {t('auth.taste.classified', { count: classifiedFilmsCount.toString(), total: totalMoviesInGame.toString() })}
                     </p>
                     <button
                         onClick={handleRefineTaste}
