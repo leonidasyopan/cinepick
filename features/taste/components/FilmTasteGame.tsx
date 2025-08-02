@@ -4,6 +4,8 @@ import { useI18n } from '../../../src/i18n/i18n';
 import { useTaste } from '../TasteContext';
 import { TasteMovie } from '../types';
 import { TASTE_IMAGE_BASE_URL } from '../services/tasteImageService';
+import { EyeSlashIcon } from '../../../components/icons/EyeSlashIcon';
+import { SkipIcon } from '../../../components/icons/SkipIcon';
 
 const MovieCard: React.FC<{
   movie: TasteMovie;
@@ -98,20 +100,32 @@ export const FilmTasteGame: React.FC<{ onFinish: () => void }> = ({ onFinish }) 
         <div className="flex items-start justify-center gap-2 sm:gap-4 md:gap-6 w-full">
           <div className="flex flex-col items-center gap-2 w-32 sm:w-40 md:w-48 text-center">
             <MovieCard movie={movieA} onClick={() => handleSelect(movieA)} isWinner={winner ? winner.tmdbId === movieA.tmdbId : null} />
-            <button className="text-xs text-text-secondary hover:underline h-8" onClick={() => handleSkipOne(movieA)}>
-              {t('tasteOnboarding.game.dontKnow')}
+            <button
+              className="flex items-center justify-center gap-1.5 text-xs text-text-secondary hover:text-text-primary bg-surface/50 hover:bg-surface px-3 py-1.5 rounded-full transition-colors duration-200"
+              onClick={() => handleSkipOne(movieA)}
+            >
+              <EyeSlashIcon className="w-4 h-4" />
+              <span>{t('tasteOnboarding.game.dontKnow')}</span>
             </button>
           </div>
           <div className="flex flex-col items-center self-center gap-4 px-1 pt-24 sm:pt-32">
             <span className="text-text-secondary font-bold text-lg">VS</span>
-            <button className="text-xs text-text-secondary hover:underline whitespace-nowrap" onClick={handleSkipPair}>
-              {t('tasteOnboarding.game.skipPair')}
+            <button
+              className="flex items-center justify-center gap-2 text-xs text-text-secondary hover:text-text-primary bg-transparent hover:bg-surface/50 px-4 py-2 rounded-full transition-colors duration-200 whitespace-nowrap"
+              onClick={handleSkipPair}
+            >
+              <SkipIcon className="w-4 h-4" />
+              <span>{t('tasteOnboarding.game.skipPair')}</span>
             </button>
           </div>
           <div className="flex flex-col items-center gap-2 w-32 sm:w-40 md:w-48 text-center">
             <MovieCard movie={movieB} onClick={() => handleSelect(movieB)} isWinner={winner ? winner.tmdbId === movieB.tmdbId : null} />
-            <button className="text-xs text-text-secondary hover:underline h-8" onClick={() => handleSkipOne(movieB)}>
-              {t('tasteOnboarding.game.dontKnow')}
+            <button
+              className="flex items-center justify-center gap-1.5 text-xs text-text-secondary hover:text-text-primary bg-surface/50 hover:bg-surface px-3 py-1.5 rounded-full transition-colors duration-200"
+              onClick={() => handleSkipOne(movieB)}
+            >
+              <EyeSlashIcon className="w-4 h-4" />
+              <span>{t('tasteOnboarding.game.dontKnow')}</span>
             </button>
           </div>
         </div>
