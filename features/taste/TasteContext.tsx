@@ -116,7 +116,6 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const originalPreferences = tastePreferences;
 
     setTastePreferences(prev => [newPreference, ...prev]);
-    setSkippedIds(new Set()); // Reset skipped IDs on classification
 
     if (user) {
       try {
