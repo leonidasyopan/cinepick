@@ -1,15 +1,12 @@
-import type { UserAnswers } from '../recommendation/types';
+import type { MovieRecommendation, UserAnswers } from '../recommendation/types';
 
 export interface HistoryItem {
-    // From recommendation
-    tmdbId: number;
-    title: string;
-    year: number;
-    posterPath: string;
-    
-    // History specific
+    // The full recommendation object
+    recommendation: MovieRecommendation;
+
+    // History specific metadata
     recommendationDate: any; // Firestore Timestamp
     watched: boolean;
     rating: 'liked' | 'disliked' | null;
-    userAnswers: UserAnswers;
+    userAnswers: UserAnswers; // Keep for context or future features
 }

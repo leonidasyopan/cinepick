@@ -45,6 +45,9 @@
       "generic": "Ocorreu um erro. Por favor, tente novamente."
     }
   },
+  "history": {
+    "deprecatedItem": "Este item é de uma versão anterior e não pode ser visualizado."
+  },
   "moodSelector": {
     "title": "Como você está se sentindo {timeOfDay}?",
     "subtitle": "Toque em um humor para selecionar, ou arraste para girar."

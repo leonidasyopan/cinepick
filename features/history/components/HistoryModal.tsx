@@ -3,6 +3,7 @@ import Modal from '../../../components/Modal';
 import { useHistory } from '../HistoryContext';
 import { useI18n } from '../../../src/i18n/i18n';
 import { HistoryItemCard } from './HistoryItemCard';
+import { DeprecatedHistoryItemCard } from './DeprecatedHistoryItemCard';
 
 interface HistoryModalProps {
     isOpen: boolean;
@@ -25,9 +26,16 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose }) => {
                     <p className="text-center text-text-secondary py-10">{t('auth.historyEmpty')}</p>
                 )}
                 {!loading && history.length > 0 && (
-                    history.map(item => (
-                        <HistoryItemCard key={item.tmdbId} item={item} onUpdate={updateHistoryItem} />
-                    ))
+                    history
+                        .filter(item => item && item.recommendation)
+                        .map(item => {
+                            if (item.recommendation.tmdbId) {
+                                return <HistoryItemCard key={item.recommendation.tmdbId} item={item} onUpdate={updateHistoryItem} />;
+                            }
+                            // Using movie title and date as a fallback key. Firestore Timestamps are unique enough.
+                            const key = `${item.recommendation.title}-${item.recommendationDate?.seconds || new Date().toISOString()}`;
+                            return <DeprecatedHistoryItemCard key={key} item={item} />;
+                        })
                 )}
             </div>
         </Modal>

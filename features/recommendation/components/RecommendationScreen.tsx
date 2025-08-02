@@ -65,7 +65,13 @@ const HighlightedText: React.FC<{ text: string, highlights: string[] }> = ({ tex
 };
 
 
-export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendation; answers: UserAnswers; onTryAgain: () => void; onBack: () => void; }> = ({ recommendation, answers, onTryAgain, onBack }) => {
+export const RecommendationScreen: React.FC<{
+    recommendation: MovieRecommendation;
+    answers: UserAnswers;
+    onTryAgain: () => void;
+    onBack: () => void;
+    showTryAgainButton?: boolean;
+}> = ({ recommendation, answers, onTryAgain, onBack, showTryAgainButton = true }) => {
     const { t, locale, getTranslatedAnswer } = useI18n();
     const { isFirebaseEnabled, user } = useAuth();
     const [displayedRec, setDisplayedRec] = useState<MovieRecommendation>(recommendation);
@@ -325,12 +331,14 @@ export const RecommendationScreen: React.FC<{ recommendation: MovieRecommendatio
                         >
                             {t('recommendationScreen.trailerButton')}
                         </a>
-                        <button
-                            onClick={onTryAgain}
-                            className="bg-surface hover:brightness-125 text-text-primary font-bold py-3 px-8 rounded-full transition-all duration-300"
-                        >
-                            {t('recommendationScreen.tryAgainButton')}
-                        </button>
+                        {showTryAgainButton && (
+                            <button
+                                onClick={onTryAgain}
+                                className="bg-surface hover:brightness-125 text-text-primary font-bold py-3 px-8 rounded-full transition-all duration-300"
+                            >
+                                {t('recommendationScreen.tryAgainButton')}
+                            </button>
+                        )}
                         <div className="relative">
                             <button
                                 onClick={handleShare}

@@ -1,4 +1,4 @@
-import { doc, setDoc, getDocs, collection, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection, updateDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import type { MovieRecommendation, UserAnswers } from '../../recommendation/types';
 import type { HistoryItem } from '../types';
@@ -10,10 +10,7 @@ export const addRecommendationToHistory = async (userId: string, recommendation:
     if (!db || !recommendation.tmdbId) return;
     try {
         const historyItem: HistoryItem = {
-            tmdbId: recommendation.tmdbId,
-            title: recommendation.title,
-            year: recommendation.year,
-            posterPath: recommendation.posterPath || '',
+            recommendation: recommendation,
             recommendationDate: serverTimestamp(),
             watched: false,
             rating: null,

@@ -40,12 +40,12 @@ export const HistoryProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const updateHistoryItem = useCallback(async (tmdbId: number, updates: Partial<Pick<HistoryItem, 'watched' | 'rating'>>) => {
         if (!user) return;
-        
+
         // Optimistic update
-        setHistory(currentHistory => currentHistory.map(item => 
-            item.tmdbId === tmdbId ? { ...item, ...updates } : item
+        setHistory(currentHistory => currentHistory.map(item =>
+            (item.recommendation && item.recommendation.tmdbId === tmdbId) ? { ...item, ...updates } : item
         ));
-        
+
         try {
             await updateHistoryItemStatus(user.uid, tmdbId, updates);
         } catch (error) {
