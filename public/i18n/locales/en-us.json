@@ -62,7 +62,11 @@
     "gameFinishButton": "I'm Done for Now",
     "completeTitle": "All Set!",
     "completeBody": "Your preferences have been saved. We'll use them to give you better, more personalized recommendations. Let's find your next favorite movie!",
-    "completeButton": "Start Picking"
+    "completeButton": "Start Picking",
+    "game": {
+      "dontKnow": "I don't know this one",
+      "skipPair": "Skip match"
+    }
   },
   "history": {
     "deprecatedItem": "This item is from a previous version and cannot be viewed."

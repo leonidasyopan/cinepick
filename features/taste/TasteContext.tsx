@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { getTastePreferences, addTastePreference } from './services/tasteService';
@@ -10,6 +9,8 @@ interface TasteContextType {
   tastePreferences: TastePreferenceInfo[];
   isLoading: boolean;
   classifyPreference: (winner: TasteMovie, loser: TasteMovie) => Promise<void>;
+  skipMovie: (movieToSkip: TasteMovie) => void;
+  skipPair: () => void;
   currentPair: [TasteMovie, TasteMovie] | null;
   classifiedCount: number;
   totalMoviesInGame: number;
@@ -24,6 +25,7 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [isFetchingUserPrefs, setIsFetchingUserPrefs] = useState(true);
   const [allMovies, setAllMovies] = useState<TasteMovie[]>([]);
   const [moviesById, setMoviesById] = useState<Map<number, TasteMovie>>(new Map());
+  const [skippedIds, setSkippedIds] = useState<Set<number>>(new Set());
 
   // Effect 1: Fetch all movie data from TMDb API on component mount.
   useEffect(() => {
@@ -75,19 +77,24 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   if (!isLoading && allMovies.length > 0) {
     if (tastePreferences.length === 0) {
-      if (allMovies.length >= 2) {
-        currentPair = [allMovies[0], allMovies[1]];
-        nextChallengers = allMovies.slice(2);
+      const availableMovies = allMovies.filter(m => !skippedIds.has(m.tmdbId));
+      if (availableMovies.length >= 2) {
+        currentPair = [availableMovies[0], availableMovies[1]];
+        nextChallengers = availableMovies.slice(2);
       }
     } else {
       const lastWinner = tastePreferences[0].preferred;
-      const nextUnclassifiedMovie = allMovies.find(movie => !classifiedIds.has(movie.tmdbId));
+      const nextUnclassifiedMovie = allMovies.find(movie =>
+        movie.tmdbId !== lastWinner.tmdbId &&
+        !classifiedIds.has(movie.tmdbId) &&
+        !skippedIds.has(movie.tmdbId)
+      );
 
       if (lastWinner && nextUnclassifiedMovie) {
         currentPair = [lastWinner, nextUnclassifiedMovie];
         const challengerIndex = allMovies.findIndex(m => m.tmdbId === nextUnclassifiedMovie.tmdbId);
         if (challengerIndex !== -1) {
-          nextChallengers = allMovies.slice(challengerIndex + 1);
+          nextChallengers = allMovies.slice(challengerIndex + 1).filter(m => !skippedIds.has(m.tmdbId));
         }
       }
     }
@@ -109,6 +116,7 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const originalPreferences = tastePreferences;
 
     setTastePreferences(prev => [newPreference, ...prev]);
+    setSkippedIds(new Set()); // Reset skipped IDs on classification
 
     if (user) {
       try {
@@ -120,10 +128,27 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [user, tastePreferences]);
 
+  const skipMovie = useCallback((movieToSkip: TasteMovie) => {
+    if (!movieToSkip) return;
+    setSkippedIds(prev => new Set(prev).add(movieToSkip.tmdbId));
+  }, []);
+
+  const skipPair = useCallback(() => {
+    if (!currentPair) return;
+    setSkippedIds(prev => {
+      const newSkipped = new Set(prev);
+      newSkipped.add(currentPair[0].tmdbId);
+      newSkipped.add(currentPair[1].tmdbId);
+      return newSkipped;
+    });
+  }, [currentPair]);
+
   const value = {
     tastePreferences,
     isLoading: isLoading,
     classifyPreference,
+    skipMovie,
+    skipPair,
     currentPair: currentPair,
     classifiedCount: tastePreferences.length,
     totalMoviesInGame: TASTE_GAME_MOVIE_IDS.length,

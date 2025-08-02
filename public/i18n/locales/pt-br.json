@@ -1,4 +1,3 @@
-
 {
   "common": {
     "back": "Voltar",
@@ -63,7 +62,11 @@
     "gameFinishButton": "Terminei por agora",
     "completeTitle": "Tudo Certo!",
     "completeBody": "Suas preferências foram salvas. Nós as usaremos para te dar recomendações melhores e mais personalizadas. Vamos encontrar seu próximo filme favorito!",
-    "completeButton": "Começar a Escolher"
+    "completeButton": "Começar a Escolher",
+    "game": {
+      "dontKnow": "Não conheço",
+      "skipPair": "Pular este duelo"
+    }
   },
   "history": {
     "deprecatedItem": "Este item é de uma versão anterior e não pode ser visualizado."
