@@ -45,6 +45,9 @@
       "generic": "Ocurrió un error. Por favor, inténtalo de nuevo."
     }
   },
+  "history": {
+    "deprecatedItem": "Este elemento es de una versión anterior y no se puede ver."
+  },
   "moodSelector": {
     "title": "¿Cómo te sientes {timeOfDay}?",
     "subtitle": "Toca un estado de ánimo para seleccionar, o arrastra para girar."

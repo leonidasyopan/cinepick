@@ -45,6 +45,9 @@
       "generic": "An error occurred. Please try again."
     }
   },
+  "history": {
+    "deprecatedItem": "This item is from a previous version and cannot be viewed."
+  },
   "moodSelector": {
     "title": "How are you feeling {timeOfDay}?",
     "subtitle": "Tap a mood to select, or drag to spin."
