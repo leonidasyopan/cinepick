@@ -3,6 +3,7 @@ import Modal from '../../../components/Modal';
 import { useAuth } from '../AuthContext';
 import { useI18n } from '../../../src/i18n/i18n';
 import type { UserPreferences } from '../../recommendation/types';
+import { useTaste } from '../../taste/TasteContext';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface ProfileModalProps {
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
     const { t } = useI18n();
     const { user, preferences, updateUserPreferences, logout } = useAuth();
+    const { tastePreferences, totalMoviesInGame } = useTaste();
     const [localPrefs, setLocalPrefs] = useState<Partial<UserPreferences>>(preferences);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -26,10 +28,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
         setMessage('');
         try {
             await updateUserPreferences(localPrefs);
-            setMessage("Preferences saved!");
+            setMessage(t('auth.saveSuccess'));
             setTimeout(() => setMessage(''), 2000);
         } catch (error) {
-            setMessage("Failed to save.");
+            setMessage(t('auth.saveError'));
         } finally {
             setLoading(false);
         }
@@ -38,7 +40,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
     const handleLogout = async () => {
         await logout();
         onClose();
-    }
+    };
+
+    const handleRefineTaste = () => {
+        onClose();
+        window.location.hash = 'onboarding';
+    };
 
     const ratingOptions: UserPreferences['ageRating'][] = ['Any', 'G', 'PG', 'PG-13', 'R', 'NC-17'];
 
@@ -46,6 +53,22 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
         <Modal isOpen={isOpen} onClose={onClose} title={t('auth.profileTitle')}>
             <div className="flex flex-col gap-6">
                 {user && <p className="text-center text-text-secondary -mt-4 mb-2">{t('auth.loggedInAs', { email: user.email })}</p>}
+
+                {/* Taste Section */}
+                <div className="flex flex-col gap-2 p-4 bg-primary/50 rounded-lg">
+                    <h3 className="text-lg font-semibold text-text-primary">{t('auth.taste.title')}</h3>
+                    <p className="text-sm text-text-secondary">
+                        {t('auth.taste.classified', { count: tastePreferences.length, total: totalMoviesInGame })}
+                    </p>
+                    <button
+                        onClick={handleRefineTaste}
+                        className="bg-surface hover:brightness-125 text-accent font-semibold py-2 px-4 rounded-md mt-2 text-sm transition-all"
+                    >
+                        {t('auth.taste.button')}
+                    </button>
+                </div>
+
+                {/* Preferences Section */}
                 <form onSubmit={handleSave} className="flex flex-col gap-4">
                     <h3 className="text-lg font-semibold text-text-primary">{t('auth.preferencesTitle')}</h3>
                     <div className="flex flex-col">
@@ -55,7 +78,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                             type="number"
                             min="1920"
                             max={new Date().getFullYear()}
-                            value={localPrefs.startYear !== undefined ? localPrefs.startYear.toString() : ''}
+                            value={localPrefs.startYear?.toString() || ''}
                             onChange={(e) => setLocalPrefs(p => ({ ...p, startYear: parseInt(e.target.value, 10) }))}
                             className="bg-primary border border-primary/50 text-text-primary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
                         />

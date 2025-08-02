@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -6,6 +5,7 @@ import { I18nProvider } from './src/i18n/i18n';
 import { AuthProvider } from './features/auth/AuthContext';
 import { TrendingMoviesProvider } from './features/trending/TrendingMoviesContext';
 import { HistoryProvider } from './features/history/HistoryContext';
+import { TasteProvider } from './features/taste/TasteContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -19,7 +19,9 @@ root.render(
       <AuthProvider>
         <HistoryProvider>
           <TrendingMoviesProvider>
-            <App />
+            <TasteProvider>
+              <App />
+            </TasteProvider>
           </TrendingMoviesProvider>
         </HistoryProvider>
       </AuthProvider>

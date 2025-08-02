@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../../firebase';
+import { getAdditionalUserInfo } from 'firebase/auth';
 import Modal from '../../../components/Modal';
 import { useI18n } from '../../../src/i18n/i18n';
 import { useAuth } from '../AuthContext';
@@ -9,11 +8,12 @@ import { GoogleIcon } from '../../../components/icons';
 interface AuthModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onNewUser: () => void;
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onNewUser }) => {
     const { t } = useI18n();
-    const { signInWithGoogle } = useAuth();
+    const { signInWithGoogle, signUpWithEmail, signInWithEmail } = useAuth();
     const [isLoginView, setIsLoginView] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -45,8 +45,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         setError(null);
         setLoading(true);
         try {
-            await signInWithGoogle();
-            onClose();
+            const credential = await signInWithGoogle();
+            const additionalInfo = getAdditionalUserInfo(credential);
+            if (additionalInfo?.isNewUser) {
+                onNewUser();
+            } else {
+                onClose();
+            }
         } catch (err: any) {
             handleAuthError(err);
         } finally {
@@ -59,19 +64,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         setError(null);
         setLoading(true);
 
-        if (!auth) {
-            setError("Firebase is not configured.");
-            setLoading(false);
-            return;
-        }
-
         try {
+            let credential;
             if (isLoginView) {
-                await signInWithEmailAndPassword(auth, email, password);
+                credential = await signInWithEmail(email, password);
+                onClose();
             } else {
-                await createUserWithEmailAndPassword(auth, email, password);
+                credential = await signUpWithEmail(email, password);
+                const additionalInfo = getAdditionalUserInfo(credential);
+                if (additionalInfo?.isNewUser) {
+                    onNewUser();
+                } else {
+                    onClose();
+                }
             }
-            onClose();
         } catch (err: any) {
             handleAuthError(err);
         } finally {
