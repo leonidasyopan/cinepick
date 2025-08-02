@@ -2,9 +2,9 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { getTastePreferences, addTastePreference } from './services/tasteService';
-import { TASTE_CHALLENGER_MOVIES, INITIAL_TASTE_PAIR } from './constants';
+import { TASTE_GAME_MOVIE_IDS, INITIAL_TASTE_IDS } from './constants';
 import type { TasteMovie, TastePreference, TastePreferenceInfo } from './types';
-import { preloadImage, TASTE_IMAGE_BASE_URL } from './services/tasteImageService';
+import { preloadImage, TASTE_IMAGE_BASE_URL, fetchAllTasteMovies } from './services/tasteImageService';
 
 // Helper to shuffle an array
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -27,38 +27,49 @@ interface TasteContextType {
 
 const TasteContext = createContext<TasteContextType | undefined>(undefined);
 
-const allMovies: TasteMovie[] = [...INITIAL_TASTE_PAIR, ...TASTE_CHALLENGER_MOVIES];
-const moviesById = new Map(allMovies.map(movie => [movie.tmdbId, movie]));
-
 export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [tastePreferences, setTastePreferences] = useState<TastePreferenceInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingInitialData, setIsFetchingInitialData] = useState(true);
+  const [isFetchingUserPrefs, setIsFetchingUserPrefs] = useState(true);
+  const [allMovies, setAllMovies] = useState<TasteMovie[]>([]);
+  const [moviesById, setMoviesById] = useState<Map<number, TasteMovie>>(new Map());
 
   const [challengerQueue, setChallengerQueue] = useState<TasteMovie[]>([]);
   const [currentWinner, setCurrentWinner] = useState<TasteMovie | null>(null);
-  const [classifiedCount, setClassifiedCount] = useState(0);
 
-  // Effect to preload the static initial pair once on mount. This ensures the very
-  // first images shown to a new user are fetched as early as possible.
+  // Effect 1: Fetch all movie data from TMDb API on component mount.
   useEffect(() => {
-    INITIAL_TASTE_PAIR.forEach(movie => {
-      if (movie.posterPath) preloadImage(`${TASTE_IMAGE_BASE_URL}${movie.posterPath}`);
-    });
+    setIsFetchingInitialData(true);
+    fetchAllTasteMovies(TASTE_GAME_MOVIE_IDS)
+      .then(fetchedMovies => {
+        setAllMovies(fetchedMovies);
+        setMoviesById(new Map(fetchedMovies.map(movie => [movie.tmdbId, movie])));
+      })
+      .catch(error => console.error("Failed to fetch initial movie data.", error))
+      .finally(() => setIsFetchingInitialData(false));
   }, []);
 
-  // Effect to setup game state based on user login status.
+  // Effect 2: Setup game state when user or initial movie data changes.
   useEffect(() => {
-    const setupInitialState = (prefs: TastePreferenceInfo[], classifiedIds: Set<number>) => {
-      const remainingChallengers = TASTE_CHALLENGER_MOVIES.filter(m => !classifiedIds.has(m.tmdbId));
-      setChallengerQueue(shuffleArray(remainingChallengers));
+    if (isFetchingInitialData || allMovies.length === 0) return;
 
-      const winner = prefs.length > 0 ? prefs[0].preferred : INITIAL_TASTE_PAIR[0];
+    const setupGameState = (prefs: TastePreferenceInfo[]) => {
+      const winner = prefs.length > 0 ? prefs[0].preferred : moviesById.get(INITIAL_TASTE_IDS[0]);
+      if (!winner) return;
       setCurrentWinner(winner);
+
+      const classifiedIds = new Set(prefs.flatMap(p => [p.preferred.tmdbId, p.rejected.tmdbId]));
+      const initialPairIds = new Set(INITIAL_TASTE_IDS);
+
+      const remainingChallengers = allMovies.filter(m =>
+        !initialPairIds.has(m.tmdbId) && !classifiedIds.has(m.tmdbId)
+      );
+      setChallengerQueue(shuffleArray(remainingChallengers));
     };
 
     if (user) {
-      setIsLoading(true);
+      setIsFetchingUserPrefs(true);
       getTastePreferences(user.uid)
         .then(prefsFromDb => {
           const detailedPrefs = prefsFromDb
@@ -68,107 +79,76 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             }))
             .filter(p => p.preferred && p.rejected) as TastePreferenceInfo[];
 
-          const classifiedIds = new Set(prefsFromDb.flatMap(p => [p.preferredId, p.rejectedId]));
-
           setTastePreferences(detailedPrefs);
-          setClassifiedCount(detailedPrefs.length);
-          setupInitialState(detailedPrefs, classifiedIds);
+          setupGameState(detailedPrefs);
         })
-        .finally(() => setIsLoading(false));
+        .finally(() => setIsFetchingUserPrefs(false));
     } else {
-      // Logged-out state: reset everything.
       setTastePreferences([]);
-      setClassifiedCount(0);
-      setupInitialState([], new Set<number>());
-      setIsLoading(false);
+      setupGameState([]);
+      setIsFetchingUserPrefs(false);
     }
-  }, [user]);
+  }, [user, allMovies, moviesById, isFetchingInitialData]);
 
-  // Effect to preload the next batch of challengers.
+  // Effect 3: Preload images for the challenger queue and current champion.
   useEffect(() => {
-    // Preload the next 4 potential challengers
     challengerQueue.slice(0, 4).forEach(movie => {
       if (movie.posterPath) preloadImage(`${TASTE_IMAGE_BASE_URL}${movie.posterPath}`);
     });
-  }, [challengerQueue]);
-
-  // Effect to preload the current champion's image. This is crucial for returning
-  // users, whose champion might not be in the initial pair.
-  useEffect(() => {
-    if (currentWinner && currentWinner.posterPath) {
+    if (currentWinner?.posterPath) {
       preloadImage(`${TASTE_IMAGE_BASE_URL}${currentWinner.posterPath}`);
     }
-  }, [currentWinner]);
+  }, [challengerQueue, currentWinner]);
 
   const classifyPreference = useCallback(async (winner: TasteMovie, loser: TasteMovie) => {
     const newPreference: TastePreferenceInfo = { preferred: winner, rejected: loser };
-    const oldState = {
-      prefs: tastePreferences,
-      queue: challengerQueue,
-      winner: currentWinner,
-      count: classifiedCount,
-    };
+    const oldState = { prefs: tastePreferences, queue: challengerQueue, winner: currentWinner };
 
-    // Optimistic update for both logged-in and logged-out users
     setTastePreferences(prev => [newPreference, ...prev]);
     setCurrentWinner(winner);
 
-    // For any round after the initial one, the challenger is at the head of the queue.
-    // We need to remove them to proceed to the next challenger.
-    if (classifiedCount > 0) {
+    // The showdown is over, remove the challenger that just competed from the queue.
+    // This prevents them from appearing again.
+    if (tastePreferences.length > 0) {
       setChallengerQueue(prev => prev.slice(1));
     }
-
-    setClassifiedCount(prev => prev + 1);
 
     if (user) {
       try {
         await addTastePreference(user.uid, winner.tmdbId, loser.tmdbId);
       } catch (error) {
         console.error("Failed to save taste preference, reverting optimistic update.", error);
-        // Revert state on failure
         setTastePreferences(oldState.prefs);
         setChallengerQueue(oldState.queue);
         setCurrentWinner(oldState.winner);
-        setClassifiedCount(oldState.count);
       }
     }
-  }, [user, tastePreferences, challengerQueue, currentWinner, classifiedCount]);
+  }, [user, tastePreferences, challengerQueue, currentWinner]);
 
   const getCurrentPair = (): [TasteMovie, TasteMovie] | null => {
-    if (isLoading) return null;
+    if (isFetchingInitialData || isFetchingUserPrefs) return null;
 
-    // At the very beginning, before any classifications
-    if (classifiedCount === 0) {
-      return INITIAL_TASTE_PAIR;
+    if (tastePreferences.length === 0) {
+      const movieA = moviesById.get(INITIAL_TASTE_IDS[0]);
+      const movieB = moviesById.get(INITIAL_TASTE_IDS[1]);
+      return movieA && movieB ? [movieA, movieB] : null;
     }
 
     if (!currentWinner || challengerQueue.length === 0) {
       return null; // Game over
     }
 
-    // The next challenger is always the first in the queue
     const nextChallenger = challengerQueue[0];
-
-    // This is a safeguard against the very bug we are fixing. Should not be needed with the new logic, but it's safe to keep.
-    if (currentWinner.tmdbId === nextChallenger.tmdbId) {
-      // This indicates a state error. Let's try to recover by advancing the queue.
-      if (challengerQueue.length > 1) {
-        return [currentWinner, challengerQueue[1]];
-      }
-      return null; // Game over if no other challengers are left.
-    }
-
     return [currentWinner, nextChallenger];
   };
 
   const value = {
     tastePreferences,
-    isLoading,
+    isLoading: isFetchingInitialData || isFetchingUserPrefs,
     classifyPreference,
     currentPair: getCurrentPair(),
-    classifiedCount: classifiedCount,
-    totalMoviesInGame: allMovies.length,
+    classifiedCount: tastePreferences.length,
+    totalMoviesInGame: allMovies.length > 0 ? allMovies.length : TASTE_GAME_MOVIE_IDS.length,
   };
 
   return <TasteContext.Provider value={value}>{children}</TasteContext.Provider>;
