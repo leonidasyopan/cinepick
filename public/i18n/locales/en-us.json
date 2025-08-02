@@ -1,9 +1,10 @@
-
 {
   "common": {
     "back": "Back",
     "appName": "Cine",
-    "appNameAccent": "Pick"
+    "appNameAccent": "Pick",
+    "done": "Done",
+    "next": "Next"
   },
   "language": {
     "name": "English",
@@ -28,6 +29,8 @@
     "startYear": "Recommend movies from this year onwards",
     "ageRating": "Maximum age rating",
     "save": "Save Preferences",
+    "saveSuccess": "Preferences saved!",
+    "saveError": "Failed to save.",
     "loggedInAs": "Logged in as {email}",
     "signInWithGoogle": "Sign in with Google",
     "orSeparator": "OR",
@@ -38,12 +41,28 @@
     "historyWatched": "Watched",
     "historyRecommendedOn": "Recommended on {date}",
     "historyEmpty": "You have no recommendation history yet. Find a movie to get started!",
+    "taste": {
+      "title": "My Taste",
+      "classified": "You've classified {count} out of {total} films.",
+      "button": "Refine My Taste"
+    },
     "error": {
       "emailInUse": "This email is already in use.",
       "weakPassword": "Password should be at least 6 characters.",
       "invalidCredential": "Invalid email or password.",
       "generic": "An error occurred. Please try again."
     }
+  },
+  "tasteOnboarding": {
+    "welcomeTitle": "Welcome to CinePick!",
+    "welcomeBody": "Tired of endless scrolling? To help us find your perfect movie in seconds, let's play a quick game to understand your unique taste.",
+    "welcomeButton": "Let's Play!",
+    "gameTitle": "Film Showdown",
+    "gameSubtitle": "Which movie do you prefer?",
+    "gameFinishButton": "I'm Done for Now",
+    "completeTitle": "All Set!",
+    "completeBody": "Your preferences have been saved. We'll use them to give you better, more personalized recommendations. Let's find your next favorite movie!",
+    "completeButton": "Start Picking"
   },
   "history": {
     "deprecatedItem": "This item is from a previous version and cannot be viewed."

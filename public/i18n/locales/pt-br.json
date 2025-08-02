@@ -3,7 +3,9 @@
   "common": {
     "back": "Voltar",
     "appName": "Cine",
-    "appNameAccent": "Pick"
+    "appNameAccent": "Pick",
+    "done": "Concluir",
+    "next": "Próximo"
   },
   "language": {
     "name": "Português",
@@ -28,6 +30,8 @@
     "startYear": "Recomendar filmes a partir deste ano",
     "ageRating": "Classificação etária máxima",
     "save": "Salvar Preferências",
+    "saveSuccess": "Preferências salvas!",
+    "saveError": "Falha ao salvar.",
     "loggedInAs": "Logado como {email}",
     "signInWithGoogle": "Entrar com Google",
     "orSeparator": "OU",
@@ -38,12 +42,28 @@
     "historyWatched": "Assistido",
     "historyRecommendedOn": "Recomendado em {date}",
     "historyEmpty": "Você ainda não tem histórico de recomendações. Encontre um filme para começar!",
+    "taste": {
+      "title": "Meu Gosto",
+      "classified": "Você classificou {count} de {total} filmes.",
+      "button": "Refinar Meu Gosto"
+    },
     "error": {
       "emailInUse": "Este e-mail já está em uso.",
       "weakPassword": "A senha deve ter pelo menos 6 caracteres.",
       "invalidCredential": "E-mail ou senha inválidos.",
       "generic": "Ocorreu um erro. Por favor, tente novamente."
     }
+  },
+  "tasteOnboarding": {
+    "welcomeTitle": "Bem-vindo(a) ao CinePick!",
+    "welcomeBody": "Cansado(a) de rolar a tela sem parar? Para nos ajudar a encontrar o seu filme perfeito em segundos, vamos jogar um jogo rápido para entender o seu gosto único.",
+    "welcomeButton": "Vamos Jogar!",
+    "gameTitle": "Batalha de Filmes",
+    "gameSubtitle": "Qual filme você prefere?",
+    "gameFinishButton": "Terminei por agora",
+    "completeTitle": "Tudo Certo!",
+    "completeBody": "Suas preferências foram salvas. Nós as usaremos para te dar recomendações melhores e mais personalizadas. Vamos encontrar seu próximo filme favorito!",
+    "completeButton": "Começar a Escolher"
   },
   "history": {
     "deprecatedItem": "Este item é de uma versão anterior e não pode ser visualizado."

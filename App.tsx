@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { UserAnswers, PartialUserAnswers, MovieRecommendation, UserPreferences } from './features/recommendation/types';
 import { getMovieRecommendation } from './features/recommendation/services/geminiService';
@@ -19,13 +17,16 @@ import { useHistory } from './features/history/HistoryContext';
 import HistoryModal from './features/history/components/HistoryModal';
 import SharedRecommendationPage from './features/sharing/components/SharedRecommendationPage';
 import HistoricRecommendationPage from './features/history/components/HistoricRecommendationPage';
+import TasteOnboardingFlow from './features/taste/components/TasteOnboardingFlow';
+import { useTaste } from './features/taste/TasteContext';
 
 
 type AppRoute =
     | { page: 'main'; step: number }
     | { page: 'share'; id: string }
     | { page: 'view'; data: string }
-    | { page: 'history-view'; id: string };
+    | { page: 'history-view'; id: string }
+    | { page: 'onboarding' };
 
 
 const STEP_HASH_MAP: { [key: number]: string } = {
@@ -64,6 +65,10 @@ const getRoute = (): AppRoute => {
         return { page: 'history-view', id: hashParts[2] };
     }
 
+    if (hashParts[0] === 'onboarding') {
+        return { page: 'onboarding' };
+    }
+
     // Priority 3: Check for fallback client-side view URLs
     if (hashParts[0] === 'view' && hashParts[1]) {
         return { page: 'view', data: hashParts[1] };
@@ -96,6 +101,7 @@ const App: React.FC = () => {
     const { t, locale, getTranslatedAnswer } = useI18n();
     const { user, loading: authLoading, preferences, isFirebaseEnabled } = useAuth();
     const { addHistoryItem } = useHistory();
+    const { tastePreferences } = useTaste();
 
     const [route, setRoute] = useState<AppRoute>(isInitialMainFlowStateSufficient ? initialRoute : { page: 'main', step: 1 });
     const [answers, setAnswers] = useState<PartialUserAnswers>({});
@@ -161,8 +167,8 @@ const App: React.FC = () => {
             // If the route hasn't changed, do nothing.
             if (JSON.stringify(newRoute) === JSON.stringify(routeRef.current)) return;
 
-            // No need to do state checks for shared pages as they are self-contained.
-            if (newRoute.page === 'share' || newRoute.page === 'view' || newRoute.page === 'history-view') {
+            // No need to do state checks for self-contained pages
+            if (newRoute.page !== 'main') {
                 setRoute(newRoute);
                 return;
             }
@@ -237,7 +243,12 @@ const App: React.FC = () => {
 
         try {
             const translatedAnswers = getTranslatedAnswer(currentAnswers);
-            const result = await getMovieRecommendation(translatedAnswers, previousSuggestions, locale, preferences as UserPreferences);
+            const result = await getMovieRecommendation(
+                translatedAnswers,
+                previousSuggestions,
+                locale,
+                preferences as UserPreferences,
+            );
             setRecommendation(result);
             if (user && result.tmdbId && isFirebaseEnabled) {
                 addHistoryItem(result, currentAnswers);
@@ -251,7 +262,7 @@ const App: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences, user, addHistoryItem, handleReset, isFirebaseEnabled]);
+    }, [previousSuggestions, locale, t, getTranslatedAnswer, preferences, user, addHistoryItem, handleReset, isFirebaseEnabled, tastePreferences]);
 
     const handleNext = useCallback((data: PartialUserAnswers) => {
         const newAnswers = { ...answers, ...data };
@@ -281,6 +292,12 @@ const App: React.FC = () => {
         if (answers.mood && answers.subMood && answers.occasion && answers.refinements) {
             fetchRecommendation(answers as UserAnswers);
         }
+    };
+
+    const handleNewUser = () => {
+        setAuthModalOpen(false);
+        isProgrammaticNavigationRef.current = true;
+        window.location.hash = 'onboarding';
     };
 
     const renderMainFlow = (step: number) => {
@@ -315,6 +332,8 @@ const App: React.FC = () => {
                 }
             case 'history-view':
                 return <HistoricRecommendationPage recommendationId={route.id} />;
+            case 'onboarding':
+                return <TasteOnboardingFlow onComplete={handleReset} />;
             case 'main':
                 return renderMainFlow(route.step);
             default:
@@ -377,7 +396,7 @@ const App: React.FC = () => {
                 </div>
             </main>
 
-            {isFirebaseEnabled && <AuthModal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} />}
+            {isFirebaseEnabled && <AuthModal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} onNewUser={handleNewUser} />}
             {isFirebaseEnabled && <ProfileModal isOpen={isProfileModalOpen} onClose={() => setProfileModalOpen(false)} />}
             {isFirebaseEnabled && <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setHistoryModalOpen(false)} />}
         </>
