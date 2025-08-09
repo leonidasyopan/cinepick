@@ -16,12 +16,18 @@ const TasteProfileSection: React.FC<{ onNavigate: () => void }> = ({ onNavigate 
     const { t } = useI18n();
     const { isGameCompleted } = useTaste();
 
+    const containerClasses = "p-4 bg-primary/50 rounded-lg h-full flex flex-col";
+
     if (isGameCompleted) {
-        return <TasteProfileDisplay />;
+        return (
+            <div className={containerClasses}>
+                <TasteProfileDisplay />
+            </div>
+        );
     }
 
     return (
-        <div className="flex flex-col gap-2 p-4 bg-primary/50 rounded-lg text-center items-center">
+        <div className={`${containerClasses} text-center items-center justify-center`}>
             <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
                 <SparklesIcon className="w-5 h-5 text-accent" />
                 {t('auth.taste.profileTitle')}
@@ -80,66 +86,70 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
     const classifiedFilmsCount = tastePreferences.length > 0 ? tastePreferences.length + 1 : 0;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={t('auth.profileTitle')}>
-            <div className="flex flex-col gap-6">
-                {user && <p className="text-center text-text-secondary -mt-4 mb-2">{t('auth.loggedInAs', { email: user.email ?? '' })}</p>}
+        <Modal isOpen={isOpen} onClose={onClose} title={t('auth.profileTitle')} sizeClass="max-w-md lg:max-w-4xl xl:max-w-5xl">
+            <div className="flex flex-col max-h-[85vh] lg:max-h-none overflow-y-auto lg:overflow-visible custom-scrollbar pr-2 -mr-2 lg:pr-0 lg:-mr-0">
+                {user && <p className="text-center text-text-secondary -mt-4 mb-4">{t('auth.loggedInAs', { email: user.email ?? '' })}</p>}
 
-                {/* Cinematic DNA Section */}
-                <TasteProfileSection onNavigate={handleNavigateToTasteGame} />
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
 
-                {/* Taste Section */}
-                <div className="flex flex-col gap-2 p-4 bg-primary/50 rounded-lg">
-                    <h3 className="text-lg font-semibold text-text-primary">{t('auth.taste.title')}</h3>
-                    <p className="text-sm text-text-secondary">
-                        {t('auth.taste.classified', { count: classifiedFilmsCount.toString(), total: totalMoviesInGame.toString() })}
-                    </p>
-                    <button
-                        onClick={handleNavigateToTasteGame}
-                        className="bg-surface hover:brightness-125 text-accent font-semibold py-2 px-4 rounded-md mt-2 text-sm transition-all"
-                    >
-                        {t('auth.taste.button')}
-                    </button>
-                </div>
-
-                {/* Preferences Section */}
-                <form onSubmit={handleSave} className="flex flex-col gap-4">
-                    <h3 className="text-lg font-semibold text-text-primary">{t('auth.preferencesTitle')}</h3>
-                    <div className="flex flex-col">
-                        <label htmlFor="startYear" className="text-sm font-medium text-text-secondary mb-1">{t('auth.startYear')}</label>
-                        <input
-                            id="startYear"
-                            type="number"
-                            min="1920"
-                            max={new Date().getFullYear()}
-                            value={localPrefs.startYear?.toString() || ''}
-                            onChange={(e) => setLocalPrefs(p => ({ ...p, startYear: parseInt(e.target.value, 10) }))}
-                            className="bg-primary border border-primary/50 text-text-primary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
-                        />
+                    <div className="lg:col-span-3">
+                        <TasteProfileSection onNavigate={handleNavigateToTasteGame} />
                     </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="ageRating" className="text-sm font-medium text-text-secondary mb-1">{t('auth.ageRating')}</label>
-                        <select
-                            id="ageRating"
-                            value={localPrefs.ageRating || 'Any'}
-                            onChange={(e) => setLocalPrefs(p => ({ ...p, ageRating: e.target.value as UserPreferences['ageRating'] }))}
-                            className="bg-primary border border-primary/50 text-text-primary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
+
+                    <div className="lg:col-span-2 flex flex-col gap-6">
+                        <div className="flex flex-col gap-2 p-4 bg-primary/50 rounded-lg">
+                            <h3 className="text-lg font-semibold text-text-primary">{t('auth.taste.title')}</h3>
+                            <p className="text-sm text-text-secondary">
+                                {t('auth.taste.classified', { count: classifiedFilmsCount.toString(), total: totalMoviesInGame.toString() })}
+                            </p>
+                            <button
+                                onClick={handleNavigateToTasteGame}
+                                className="bg-surface hover:brightness-125 text-accent font-semibold py-2 px-4 rounded-md mt-2 text-sm transition-all"
+                            >
+                                {t('auth.taste.button')}
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSave} className="flex flex-col gap-4">
+                            <h3 className="text-lg font-semibold text-text-primary">{t('auth.preferencesTitle')}</h3>
+                            <div className="flex flex-col">
+                                <label htmlFor="startYear" className="text-sm font-medium text-text-secondary mb-1">{t('auth.startYear')}</label>
+                                <input
+                                    id="startYear"
+                                    type="number"
+                                    min="1920"
+                                    max={new Date().getFullYear()}
+                                    value={localPrefs.startYear?.toString() || ''}
+                                    onChange={(e) => setLocalPrefs(p => ({ ...p, startYear: parseInt(e.target.value, 10) }))}
+                                    className="bg-primary border border-primary/50 text-text-primary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label htmlFor="ageRating" className="text-sm font-medium text-text-secondary mb-1">{t('auth.ageRating')}</label>
+                                <select
+                                    id="ageRating"
+                                    value={localPrefs.ageRating || 'Any'}
+                                    onChange={(e) => setLocalPrefs(p => ({ ...p, ageRating: e.target.value as UserPreferences['ageRating'] }))}
+                                    className="bg-primary border border-primary/50 text-text-primary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                                >
+                                    {ratingOptions.map(r => <option key={r} value={r}>{r === 'Any' ? t('auth.ratings.any') : r}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button type="submit" disabled={loading} className="flex-grow bg-accent text-background font-bold py-2 px-4 rounded-md mt-2 hover:opacity-90 transition-opacity disabled:bg-gray-500">
+                                    {loading ? <div className="h-5 w-5 mx-auto border-2 border-background border-t-transparent rounded-full animate-spin"></div> : t('auth.save')}
+                                </button>
+                                {message && <p className="text-sm text-accent animate-fade-in">{message}</p>}
+                            </div>
+                        </form>
+                        <button
+                            onClick={handleLogout}
+                            className="w-full bg-surface hover:brightness-125 text-text-primary font-bold py-2 px-4 rounded-md border border-primary/50 transition-all duration-300"
                         >
-                            {ratingOptions.map(r => <option key={r} value={r}>{r === 'Any' ? t('auth.ratings.any') : r}</option>)}
-                        </select>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button type="submit" disabled={loading} className="flex-grow bg-accent text-background font-bold py-2 px-4 rounded-md mt-2 hover:opacity-90 transition-opacity disabled:bg-gray-500">
-                            {loading ? <div className="h-5 w-5 mx-auto border-2 border-background border-t-transparent rounded-full animate-spin"></div> : t('auth.save')}
+                            {t('auth.logout')}
                         </button>
-                        {message && <p className="text-sm text-accent animate-fade-in">{message}</p>}
                     </div>
-                </form>
-                <button
-                    onClick={handleLogout}
-                    className="w-full bg-surface hover:brightness-125 text-text-primary font-bold py-2 px-4 rounded-md border border-primary/50 transition-all duration-300"
-                >
-                    {t('auth.logout')}
-                </button>
+                </div>
             </div>
         </Modal>
     );
