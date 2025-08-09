@@ -9,7 +9,7 @@ export interface TasteMovie {
 export interface TastePreference {
   preferredId: number;
   rejectedId: number;
-  timestamp: any; // Firestore timestamp
+  timestamp: any;
 }
 
 // Used in the app, with full movie details
