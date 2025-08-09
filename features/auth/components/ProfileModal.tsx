@@ -4,11 +4,39 @@ import { useAuth } from '../AuthContext';
 import { useI18n } from '../../../src/i18n/i18n';
 import type { UserPreferences } from '../../recommendation/types';
 import { useTaste } from '../../taste/TasteContext';
+import { TasteProfileDisplay } from '../../taste/components/TasteProfileDisplay';
+import { SparklesIcon } from '../../../components/icons/SparklesIcon';
 
 interface ProfileModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
+
+const TasteProfileSection: React.FC<{ onNavigate: () => void }> = ({ onNavigate }) => {
+    const { t } = useI18n();
+    const { isGameCompleted } = useTaste();
+
+    if (isGameCompleted) {
+        return <TasteProfileDisplay />;
+    }
+
+    return (
+        <div className="flex flex-col gap-2 p-4 bg-primary/50 rounded-lg text-center items-center">
+            <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+                <SparklesIcon className="w-5 h-5 text-accent" />
+                {t('auth.taste.profileTitle')}
+            </h3>
+            <p className="text-sm text-text-secondary">{t('auth.taste.unlockPrompt')}</p>
+            <button
+                onClick={onNavigate}
+                className="bg-surface hover:brightness-125 text-accent font-semibold py-2 px-4 rounded-md mt-2 text-sm transition-all"
+            >
+                {t('auth.taste.unlockButton')}
+            </button>
+        </div>
+    );
+};
+
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
     const { t } = useI18n();
@@ -42,21 +70,22 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
         onClose();
     };
 
-    const handleRefineTaste = () => {
+    const handleNavigateToTasteGame = () => {
         onClose();
         window.location.hash = 'onboarding';
     };
 
     const ratingOptions: UserPreferences['ageRating'][] = ['Any', 'G', 'PG', 'PG-13', 'R', 'NC-17'];
 
-    // The number of films classified is always one more than the number of preferences (battles),
-    // except when there are no preferences, in which case it's zero.
     const classifiedFilmsCount = tastePreferences.length > 0 ? tastePreferences.length + 1 : 0;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={t('auth.profileTitle')}>
             <div className="flex flex-col gap-6">
                 {user && <p className="text-center text-text-secondary -mt-4 mb-2">{t('auth.loggedInAs', { email: user.email ?? '' })}</p>}
+
+                {/* Cinematic DNA Section */}
+                <TasteProfileSection onNavigate={handleNavigateToTasteGame} />
 
                 {/* Taste Section */}
                 <div className="flex flex-col gap-2 p-4 bg-primary/50 rounded-lg">
@@ -65,7 +94,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                         {t('auth.taste.classified', { count: classifiedFilmsCount.toString(), total: totalMoviesInGame.toString() })}
                     </p>
                     <button
-                        onClick={handleRefineTaste}
+                        onClick={handleNavigateToTasteGame}
                         className="bg-surface hover:brightness-125 text-accent font-semibold py-2 px-4 rounded-md mt-2 text-sm transition-all"
                     >
                         {t('auth.taste.button')}

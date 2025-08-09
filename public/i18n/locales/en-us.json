@@ -1,3 +1,4 @@
+
 {
   "common": {
     "back": "Back",
@@ -44,7 +45,17 @@
     "taste": {
       "title": "My Taste",
       "classified": "You've classified {count} out of {total} films.",
-      "button": "Refine My Taste"
+      "button": "Refine My Taste",
+      "profileTitle": "Your Cinematic DNA",
+      "profileDescription": "Based on your choices in the Film Showdown, here's what we think your taste in movies looks like.",
+      "profileLoading": "Analyzing your taste...",
+      "profileError": "Couldn't generate your profile. Please try again later.",
+      "disagreeButton": "Disagree?",
+      "refinePrompt": "What did we get wrong? Help us refine your profile.",
+      "submitRefinement": "Submit Feedback",
+      "cancelRefinement": "Cancel",
+      "unlockPrompt": "Complete the Film Showdown to unlock your Cinematic DNA!",
+      "unlockButton": "Play Now"
     },
     "error": {
       "emailInUse": "This email is already in use.",

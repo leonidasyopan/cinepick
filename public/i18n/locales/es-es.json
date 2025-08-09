@@ -1,3 +1,4 @@
+
 {
   "common": {
     "back": "Volver",
@@ -44,7 +45,17 @@
     "taste": {
       "title": "Mis Gustos",
       "classified": "Has clasificado {count} de {total} películas.",
-      "button": "Refinar Mis Gustos"
+      "button": "Refinar Mis Gustos",
+      "profileTitle": "Tu ADN Cinematográfico",
+      "profileDescription": "Basado en tus elecciones en el Duelo de Películas, así es como creemos que son tus gustos cinematográficos.",
+      "profileLoading": "Analizando tus gustos...",
+      "profileError": "No se pudo generar tu perfil. Por favor, inténtalo más tarde.",
+      "disagreeButton": "¿No estás de acuerdo?",
+      "refinePrompt": "¿En qué nos equivocamos? Ayúdanos a refinar tu perfil.",
+      "submitRefinement": "Enviar Feedback",
+      "cancelRefinement": "Cancelar",
+      "unlockPrompt": "¡Completa el Duelo de Películas para desbloquear tu ADN Cinematográfico!",
+      "unlockButton": "Jugar Ahora"
     },
     "error": {
       "emailInUse": "Este correo electrónico ya está en uso.",

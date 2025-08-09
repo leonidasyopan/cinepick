@@ -1,3 +1,4 @@
+
 {
   "common": {
     "back": "Voltar",
@@ -44,7 +45,17 @@
     "taste": {
       "title": "Meu Gosto",
       "classified": "Você classificou {count} de {total} filmes.",
-      "button": "Refinar Meu Gosto"
+      "button": "Refinar Meu Gosto",
+      "profileTitle": "Seu DNA Cinematográfico",
+      "profileDescription": "Com base nas suas escolhas na Batalha de Filmes, aqui está a nossa análise do seu gosto para filmes.",
+      "profileLoading": "Analisando seu gosto...",
+      "profileError": "Não foi possível gerar seu perfil. Por favor, tente novamente mais tarde.",
+      "disagreeButton": "Discorda?",
+      "refinePrompt": "O que erramos? Ajude-nos a refinar seu perfil.",
+      "submitRefinement": "Enviar Feedback",
+      "cancelRefinement": "Cancelar",
+      "unlockPrompt": "Complete a Batalha de Filmes para desbloquear seu DNA Cinematográfico!",
+      "unlockButton": "Jogar Agora"
     },
     "error": {
       "emailInUse": "Este e-mail já está em uso.",
@@ -268,7 +279,7 @@
       "tragic": {
         "solo": {
           "0": { "optionA": "Tragédia de Cinema de Arte", "optionB": "Obra-prima Visual Distante", "description": "Espiral emocional vs. metáfora onírica." },
-          "1": { "optionA": "Drama em Língua Estrangeira", "optionB": "Filme Filosófico Minimalista", "description": "Tristeza rica vs. beleza abstrata." },
+          "1": { "optionA": "Drama em Língua Estrangeira", "optionB": "Filme Filosófico Minimalista", "description": "Tristeza rica vs. beleza abstracta." },
           "2": { "optionA": "Tragédia Mítica", "optionB": "Ficção Científica Existencial", "description": "Destino vs. absurdo." }
         },
         "friends": {
