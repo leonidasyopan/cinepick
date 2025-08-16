@@ -44,6 +44,8 @@ interface TmdbMovieResponse {
   title: string;
   poster_path: string | null;
   release_date: string; // e.g., "2008-07-16"
+  adult: boolean; // Added to check for adult content flag
+  genre_ids?: number[]; // Added to check genres
 }
 
 /**
@@ -75,8 +77,31 @@ export const fetchAllTasteMovies = async (ids: number[]): Promise<TasteMovie[]> 
   try {
     const results = await Promise.all(moviePromises);
 
+    // Added safety filters to prevent inappropriate content
     return results
-      .filter((movie): movie is TmdbMovieResponse => movie !== null && !!movie.poster_path)
+      .filter((movie): movie is TmdbMovieResponse => {
+        // Filter out null responses
+        if (movie === null) return false;
+        
+        // Filter out movies without posters
+        if (!movie.poster_path) return false;
+        
+        // Filter out any movie flagged as adult content
+        if (movie.adult === true) {
+          console.warn(`Filtered out adult content: ${movie.title} (ID: ${movie.id})`);
+          return false;
+        }
+        
+        // Additional safety: Filter out movies with suspicious titles
+        const suspiciousTerms = ['xxx', 'porn', 'adult', 'sex', 'erotic', 'fantastics'];
+        const lowercaseTitle = movie.title.toLowerCase();
+        if (suspiciousTerms.some(term => lowercaseTitle.includes(term))) {
+          console.warn(`Filtered out potentially inappropriate content: ${movie.title} (ID: ${movie.id})`);
+          return false;
+        }
+        
+        return true;
+      })
       .map(movie => ({
         tmdbId: movie.id,
         title: movie.title,

@@ -13,33 +13,33 @@ export const TASTE_GAME_MOVIE_IDS: number[] = [
   671,    // Harry Potter and the Sorcerer's Stone
 
   // ===== PHASE 2: TONE, SCALE & SUB-GENRE NUANCE (Films 11-25) =====
-  27205,  // Inception (This was tmdbId: 38356, which is an error in user prompt, correct is 27205)
+  27205,  // Inception 
   496243, // Parasite
-  447332, // Get Out
+  419430, // Get Out
   157336, // Interstellar
   324857, // Spider-Man: Into the Spider-Verse
-  4935,   // Amélie
-  337339, // The Greatest Showman
+  194,   // Le Fabuleux Destin d'Amélie Poulain
+  316029, // The Greatest Showman
   129,    // Spirited Away
-  709631, // Dune: Part Two - NOTE: This seems to be an ID for a different movie. Correct Dune 2 is 693134. User might have error. Using user provided for now.
-  555894, // Knives Out
+  693134, // Dune: Part Two 
+  546554, // Knives Out
   505642, // Black Panther: Wakanda Forever
-  804150, // Puss in Boots: The Last Wish
-  453395, // Guardians of the Galaxy Vol. 3
-  384000, // Fast & Furious Presents: Hobbs & Shaw
-  532639, // Bullet Train
+  315162, // Puss in Boots: The Last Wish
+  447365, // Guardians of the Galaxy Vol. 3
+  384018, // Fast & Furious Presents: Hobbs & Shaw
+  718930, // Bullet Train
 
   // ===== PHASE 3: DEEPER DIVES & CONTEMPORARY FLAVORS (Films 26-38) =====
   872585, // Oppenheimer
-  494024, // Dungeons & Dragons: Honor Among Thieves
-  76321,  // The Farewell
-  567189, // Shang-Chi and the Legend of the Ten Rings
-  626735, // The Bad Guys
+  493529, // Dungeons & Dragons: Honor Among Thieves
+  565310,  // The Farewell
+  566525, // Shang-Chi and the Legend of the Ten Rings
+  629542, // The Bad Guys
   634649, // Spider-Man: No Way Home
-  1022796,// Inside Out 2
-  1011985,// Wish
-  1096056,// The Garfield Movie
-  1260844,// Deadpool & Wolverine
-  870358, // The Fall Guy
-  986022, // Challengers
+  1011985, // Inside Out 2
+  1022796, // Wish
+  8920, // The Garfield Movie
+  533535, // Deadpool & Wolverine
+  746036, // The Fall Guy
+  937287, // Challengers
 ];

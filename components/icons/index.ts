@@ -23,3 +23,4 @@ export * from './ShareIcon';
 export * from './EyeSlashIcon';
 export * from './FilmIcon';
 export * from './SkipIcon';
+export * from './SparklesIcon';
