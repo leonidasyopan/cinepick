@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { getTastePreferences, addTastePreference, getTasteProfile, saveTasteProfile } from './services/tasteService';
+import { getTastePreferences, addTastePreference, getTasteProfile, saveTasteProfile, getFavoriteMovieIds, saveFavoriteMovieIds } from './services/tasteService';
 import { generateTasteProfile, refineTasteProfile } from './services/tasteProfileService';
 import { TASTE_GAME_MOVIE_IDS } from './constants';
 import type { TasteMovie, TastePreferenceInfo } from './types';
@@ -21,6 +21,9 @@ interface TasteContextType {
   isGeneratingProfile: boolean;
   generateAndSaveProfile: () => Promise<void>;
   refineAndSaveProfile: (justification: string) => Promise<void>;
+  // Exported for displaying favorites
+  favoriteIds: Set<number>;
+  moviesById: Map<number, TasteMovie>;
 }
 
 const TasteContext = createContext<TasteContextType | undefined>(undefined);
@@ -37,6 +40,10 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // New state for Taste Profile
   const [tasteProfile, setTasteProfile] = useState<string | null>(null);
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
+
+  // New state for consecutive wins feature
+  const [winStreaks, setWinStreaks] = useState<Map<number, number>>(new Map());
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
 
   // Effect 1: Fetch all movie data from TMDb API on component mount.
   useEffect(() => {
@@ -71,11 +78,15 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         });
 
       const profilePromise = getTasteProfile(user.uid).then(setTasteProfile);
+      const favoritesPromise = getFavoriteMovieIds(user.uid).then(ids => setFavoriteIds(new Set(ids)));
 
-      Promise.all([prefsPromise, profilePromise]).finally(() => setIsFetchingUserPrefs(false));
+
+      Promise.all([prefsPromise, profilePromise, favoritesPromise]).finally(() => setIsFetchingUserPrefs(false));
     } else {
       setTastePreferences([]);
       setTasteProfile(null);
+      setFavoriteIds(new Set());
+      setWinStreaks(new Map());
       setIsFetchingUserPrefs(false);
     }
   }, [user, allMovies.length, moviesById, isFetchingInitialData]);
@@ -84,29 +95,36 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const isLoading = isFetchingInitialData || isFetchingUserPrefs;
   const classifiedIds = new Set(tastePreferences.flatMap(p => [p.preferred.tmdbId, p.rejected.tmdbId]));
 
+  const isLastWinnerRetired = tastePreferences.length > 0 && favoriteIds.has(tastePreferences[0].preferred.tmdbId);
+
   let currentPair: [TasteMovie, TasteMovie] | null = null;
   let nextChallengers: TasteMovie[] = [];
 
   if (!isLoading && allMovies.length > 0) {
-    if (tastePreferences.length === 0) {
-      const availableMovies = allMovies.filter(m => !skippedIds.has(m.tmdbId));
-      if (availableMovies.length >= 2) {
-        currentPair = [availableMovies[0], availableMovies[1]];
-        nextChallengers = availableMovies.slice(2);
+    const availableMovies = allMovies.filter(m => !skippedIds.has(m.tmdbId) && !favoriteIds.has(m.tmdbId));
+
+    if (tastePreferences.length === 0 || isLastWinnerRetired) {
+      // Start a new tournament because it's the beginning or the last winner was just retired.
+      const unclassifiedMovies = availableMovies.filter(m => !classifiedIds.has(m.tmdbId));
+      if (unclassifiedMovies.length >= 2) {
+        currentPair = [unclassifiedMovies[0], unclassifiedMovies[1]];
+        nextChallengers = unclassifiedMovies.slice(2);
       }
     } else {
+      // Continue "king of the hill" tournament.
       const lastWinner = tastePreferences[0].preferred;
       const nextUnclassifiedMovie = allMovies.find(movie =>
         movie.tmdbId !== lastWinner.tmdbId &&
         !classifiedIds.has(movie.tmdbId) &&
-        !skippedIds.has(movie.tmdbId)
+        !skippedIds.has(movie.tmdbId) &&
+        !favoriteIds.has(movie.tmdbId)
       );
 
       if (lastWinner && nextUnclassifiedMovie) {
         currentPair = [lastWinner, nextUnclassifiedMovie];
         const challengerIndex = allMovies.findIndex(m => m.tmdbId === nextUnclassifiedMovie.tmdbId);
         if (challengerIndex !== -1) {
-          nextChallengers = allMovies.slice(challengerIndex + 1).filter(m => !skippedIds.has(m.tmdbId));
+          nextChallengers = allMovies.slice(challengerIndex + 1).filter(m => !skippedIds.has(m.tmdbId) && !favoriteIds.has(m.tmdbId));
         }
       }
     }
@@ -129,6 +147,27 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const newPreference: TastePreferenceInfo = { preferred: winner, rejected: loser };
     const originalPreferences = tastePreferences;
     setTastePreferences(prev => [newPreference, ...prev]);
+
+    // Update win streaks
+    const newWinStreaks = new Map(winStreaks);
+    const currentStreak = newWinStreaks.get(winner.tmdbId) || 0;
+    const newStreak = currentStreak + 1;
+    newWinStreaks.set(winner.tmdbId, newStreak);
+    newWinStreaks.set(loser.tmdbId, 0); // Reset loser's streak
+    setWinStreaks(newWinStreaks);
+
+    // Check for new favorite
+    if (newStreak >= 4 && !favoriteIds.has(winner.tmdbId)) {
+      const newFavorites = new Set(favoriteIds).add(winner.tmdbId);
+      setFavoriteIds(newFavorites);
+      if (user) {
+        saveFavoriteMovieIds(user.uid, Array.from(newFavorites)).catch(err => {
+          console.error("Failed to save favorites, reverting optimistic update.", err);
+          setFavoriteIds(favoriteIds);
+        });
+      }
+    }
+
     if (user) {
       try {
         await addTastePreference(user.uid, winner.tmdbId, loser.tmdbId);
@@ -137,7 +176,7 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setTastePreferences(originalPreferences);
       }
     }
-  }, [user, tastePreferences]);
+  }, [user, tastePreferences, winStreaks, favoriteIds]);
 
   const skipMovie = useCallback((movieToSkip: TasteMovie) => {
     if (!movieToSkip) return;
@@ -196,6 +235,8 @@ export const TasteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     isGeneratingProfile,
     generateAndSaveProfile,
     refineAndSaveProfile,
+    favoriteIds,
+    moviesById,
   };
 
   return <TasteContext.Provider value={value}>{children}</TasteContext.Provider>;

@@ -6,6 +6,7 @@ import type { UserPreferences } from '../../recommendation/types';
 import { useTaste } from '../../taste/TasteContext';
 import { TasteProfileDisplay } from '../../taste/components/TasteProfileDisplay';
 import { SparklesIcon } from '../../../components/icons/SparklesIcon';
+import { TASTE_IMAGE_BASE_URL } from '../../taste/services/tasteImageService';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -47,7 +48,7 @@ const TasteProfileSection: React.FC<{ onNavigate: () => void }> = ({ onNavigate 
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
     const { t } = useI18n();
     const { user, preferences, updateUserPreferences, logout } = useAuth();
-    const { tastePreferences, totalMoviesInGame } = useTaste();
+    const { tastePreferences, totalMoviesInGame, favoriteIds, moviesById } = useTaste();
     const [localPrefs, setLocalPrefs] = useState<Partial<UserPreferences>>(preferences);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -84,6 +85,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
     const ratingOptions: UserPreferences['ageRating'][] = ['Any', 'G', 'PG', 'PG-13', 'R', 'NC-17'];
 
     const classifiedFilmsCount = tastePreferences.length > 0 ? tastePreferences.length + 1 : 0;
+    const favoriteMovies = Array.from(favoriteIds).map(id => moviesById.get(id)).filter(Boolean);
+
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={t('auth.profileTitle')} sizeClass="max-w-md lg:max-w-4xl xl:max-w-5xl">
@@ -97,6 +100,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div className="lg:col-span-2 flex flex-col gap-6">
+                        {favoriteMovies.length > 0 && (
+                            <div className="p-4 bg-primary/50 rounded-lg">
+                                <h3 className="text-lg font-semibold text-text-primary">🏆 Your Favorites</h3>
+                                <p className="text-sm text-text-secondary mb-3">
+                                    These are your champions from the Film Showdown!
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {favoriteMovies.map(movie => movie && (
+                                        <div key={movie.tmdbId} className="group relative" title={`${movie.title} (${movie.year})`}>
+                                            <img src={`${TASTE_IMAGE_BASE_URL}${movie.posterPath}`} alt={movie.title} className="w-16 h-24 object-cover rounded-md shadow-md" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         <div className="flex flex-col gap-2 p-4 bg-primary/50 rounded-lg">
                             <h3 className="text-lg font-semibold text-text-primary">{t('auth.taste.title')}</h3>
                             <p className="text-sm text-text-secondary">

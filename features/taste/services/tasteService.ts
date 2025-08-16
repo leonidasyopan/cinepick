@@ -60,3 +60,29 @@ export const saveTasteProfile = async (userId: string, profileText: string): Pro
     throw error;
   }
 };
+
+export const getFavoriteMovieIds = async (userId: string): Promise<number[]> => {
+  if (!db) return [];
+  try {
+    const docRef = firestore.doc(db, USER_DOC_PATH(userId));
+    const docSnap = await firestore.getDoc(docRef);
+    if (docSnap.exists() && docSnap.data()?.favoriteMovieIds) {
+      return docSnap.data()?.favoriteMovieIds || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching favorite movie IDs:", error);
+    return [];
+  }
+};
+
+export const saveFavoriteMovieIds = async (userId: string, favoriteIds: number[]): Promise<void> => {
+  if (!db) return;
+  try {
+    const docRef = firestore.doc(db, USER_DOC_PATH(userId));
+    await firestore.setDoc(docRef, { favoriteMovieIds: favoriteIds }, { merge: true });
+  } catch (error) {
+    console.error("Error saving favorite movie IDs:", error);
+    throw error;
+  }
+};
